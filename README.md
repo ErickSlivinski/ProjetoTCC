@@ -150,12 +150,3 @@ static const bool INVERT_SERVO_DIRECTION = false;
 
 Depois grave novamente e refaca a calibracao.
 
-### 7. Roteiro rapido de demonstracao
-
-1. Mostrar o ESP32 criando a rede `FOGAO-ESP32`.
-2. Conectar o celular/notebook nessa rede.
-3. Abrir `http://192.168.4.1`.
-4. Mostrar o slider movendo o servo.
-5. Mostrar os valores calibrados.
-6. Iniciar um timer curto.
-7. Mostrar o fechamento automatico ao final do timer.
