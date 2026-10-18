@@ -89,7 +89,7 @@ static const char *AP_PASSWORD = "12345678";
 5. Conecte o celular ou computador ao Wi-Fi `FOGAO-ESP32`.
 6. Acesse `http://192.168.4.1`.
 
-## Passo a passo para a apresentacao
+## Passo a passo para o uso
 
 ### 1. Preparar o computador
 
