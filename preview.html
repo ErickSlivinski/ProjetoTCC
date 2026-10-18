@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fog&atilde;o - 1 man&iacute;pulo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f2ec;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d7dce2;
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --danger: #b42318;
+      --danger-dark: #8f1d16;
+      --ok: #15803d;
+      --warn: #a16207;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #ffffff 0, var(--bg) 260px);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(760px, 100%);
+      margin: 0 auto;
+      padding: 22px 16px 38px;
+    }
+
+    header {
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 8vw, 44px);
+      line-height: 1;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.45;
+      margin: 8px 0 0;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 8px 22px rgba(16, 24, 40, 0.07);
+    }
+
+    @keyframes alarmPulse {
+
+      0%,
+      100% {
+        border-color: var(--line);
+      }
+
+      50% {
+        border-color: var(--ok);
+        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.18);
+      }
+    }
+
+    .alarm {
+      animation: alarmPulse 0.6s linear infinite;
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 78px;
+      padding: 12px;
+    }
+
+    .label {
+      color: var(--muted);
+      display: block;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      display: block;
+      font-size: 22px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .timer-fields {
+      display: grid;
+      grid-template-columns: minmax(94px, 112px) minmax(94px, 112px) auto auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 10px;
+    }
+
+    .field-label {
+      color: var(--muted);
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      min-height: 44px;
+      padding: 0 14px;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    button.danger:hover {
+      background: var(--danger-dark);
+    }
+
+    button.secondary {
+      background: #344054;
+    }
+
+    input[type="number"] {
+      width: 110px;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      padding: 0 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .slider-line {
+      display: grid;
+      grid-template-columns: 1fr 74px;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .track-state {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .warn {
+      color: var(--warn);
+      font-weight: 700;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 620px) {
+      .status {
+        grid-template-columns: 1fr;
+      }
+
+      .timer-fields {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      button {
+        flex: 1 1 138px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <header>
+      <h1>Fog&atilde;o - 1 man&iacute;pulo</h1>
+      <p>Conecte-se ao Wi-Fi <strong>FOGAO-ESP32</strong> e acesse <strong>192.168.4.1</strong>.</p>
+    </header>
+
+    <section class="grid">
+      <div class="panel status" id="statusPanel" aria-live="polite">
+        <div class="metric">
+          <span class="label">Estado assumido</span>
+          <span class="value" id="nivel">Fechado</span>
+        </div>
+        <div class="metric">
+          <span class="label">Tempo restante</span>
+          <span class="value mono" id="tempo">00:00</span>
+        </div>
+        <div class="metric">
+          <span class="label">Servo</span>
+          <span class="value" id="servo">liberado</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="label">Controle & Sincroniza&ccedil;&atilde;o Manual</span>
+        <p>Use quando girar o man&iacute;pulo na m&atilde;o. Clique em <strong>Marcar</strong> para dizer ao sistema onde o man&iacute;pulo est&aacute; sem mover o motor:</p>
+        <div class="row">
+          <span class="field-label" style="width:100%;margin-bottom:0;">Sincronizar posi&ccedil;&atilde;o atual (sem mover motor):</span>
+          <button type="button" class="secondary" onclick="marcar('fechado')">&#x2714; Marcar Fechado</button>
+          <button type="button" class="secondary" onclick="marcar('alto')">Marcar Alto</button>
+          <button type="button" class="secondary" onclick="marcar('medio')">Marcar M&eacute;dio</button>
+          <button type="button" class="secondary" onclick="marcar('baixo')">Marcar Baixo</button>
+        </div>
+        <div class="row" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--line);">
+          <span class="field-label" style="width:100%;margin-bottom:0;">Girar man&iacute;pulo com o servo:</span>
+          <button type="button" onclick="irPara('alto')">Ir para Alto</button>
+          <button type="button" onclick="irPara('medio')">Ir para M&eacute;dio</button>
+          <button type="button" onclick="irPara('baixo')">Ir para Baixo</button>
+          <button type="button" class="danger" onclick="fechar()">Fechar agora</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="label">Timer de cozimento</span>
+        <div class="timer-fields">
+          <label>
+            <span class="field-label">Minutos</span>
+            <input id="timerMin" type="number" min="0" max="720" value="10" aria-label="Minutos do timer">
+          </label>
+          <label>
+            <span class="field-label">Segundos</span>
+            <input id="timerSec" type="number" min="0" max="59" value="0" aria-label="Segundos do timer">
+          </label>
+          <button type="button" onclick="iniciarTimer()">Iniciar timer</button>
+          <button type="button" onclick="cancelarTimer()" class="secondary">Cancelar timer</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="label">Calibra&ccedil;&atilde;o e teste do servo</span>
+        <p>Ajuste o slider com o fog&atilde;o desligado. Quando o &acirc;ngulo bater com a posi&ccedil;&atilde;o
+          desejada, salve esse valor no bot&atilde;o correspondente.</p>
+        <div class="slider-line">
+          <input id="servoSlider" type="range" min="0" max="180" value="0" oninput="mover(this.value)"
+            aria-label="&Acirc;ngulo do servo">
+          <strong><span id="posLabel">0</span>&deg;</strong>
+        </div>
+        <div class="track-state" id="trackState">Aguardando comando.</div>
+        <div class="row">
+          <button type="button" class="secondary" onclick="salvarCalibracao('fechado')">Salvar fechado</button>
+          <button type="button" class="secondary" onclick="salvarCalibracao('alto')">Salvar alto</button>
+          <button type="button" class="secondary" onclick="salvarCalibracao('medio')">Salvar m&eacute;dio</button>
+          <button type="button" class="secondary" onclick="salvarCalibracao('baixo')">Salvar baixo</button>
+        </div>
+        <p class="mono" id="calValues">Fechado: 0&deg; | Alto: 180&deg; | M&eacute;dio: 120&deg; | Baixo: 70&deg;</p>
+        <p class="warn">N&atilde;o force o man&iacute;pulo contra o servo energizado. Use "Liberar servo" antes de mover
+          na m&atilde;o.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const nivelEl = document.getElementById("nivel");
+    const tempoEl = document.getElementById("tempo");
+    const servoEl = document.getElementById("servo");
+    const slider = document.getElementById("servoSlider");
+    const posLabel = document.getElementById("posLabel");
+    const statusPanel = document.getElementById("statusPanel");
+    const trackState = document.getElementById("trackState");
+    const calValues = document.getElementById("calValues");
+    let timerEnd = 0;
+    let timerId = null;
+    let sliderFrame = 0;
+    const defaultCalibration = {
+      fechado: 0,
+      alto: 180,
+      medio: 120,
+      baixo: 70,
+    };
+    const calibration = loadCalibration();
+
+    function loadCalibration() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("fogaoServoCalibration") || "{}");
+        return {
+          fechado: Number.isFinite(saved.fechado) ? saved.fechado : defaultCalibration.fechado,
+          alto: Number.isFinite(saved.alto) ? saved.alto : defaultCalibration.alto,
+          medio: Number.isFinite(saved.medio) ? saved.medio : defaultCalibration.medio,
+          baixo: Number.isFinite(saved.baixo) ? saved.baixo : defaultCalibration.baixo
+        };
+      } catch (e) {
+        return { ...defaultCalibration };
+      }
+    }
+
+    function saveCalibration() {
+      localStorage.setItem("fogaoServoCalibration", JSON.stringify(calibration));
+    }
+
+    function formatSeconds(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    }
+
+    function setPosition(label, deg, attached = true) {
+      nivelEl.textContent = label;
+      slider.value = deg;
+      posLabel.textContent = deg;
+      servoEl.textContent = attached ? `${deg}\u00b0` : "liberado";
+    }
+
+    function updateCalValues() {
+      calValues.textContent = `Fechado: ${calibration.fechado}\u00b0 | Alto: ${calibration.alto}\u00b0 | M\u00e9dio: ${calibration.medio}\u00b0 | Baixo: ${calibration.baixo}\u00b0`;
+    }
+
+    function setSliderVisual(value) {
+      const rounded = Math.round(Number(value));
+      slider.value = rounded;
+      posLabel.textContent = rounded;
+      servoEl.textContent = `${rounded}\u00b0`;
+    }
+
+    function animateSliderTo(target, duration = 2500) {
+      cancelAnimationFrame(sliderFrame);
+      const from = Number(slider.value);
+      const to = Number(target);
+      const start = performance.now();
+      trackState.textContent = "Fechando automaticamente...";
+
+      function step(now) {
+        const progress = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setSliderVisual(from + (to - from) * eased);
+
+        if (progress < 1) {
+          sliderFrame = requestAnimationFrame(step);
+        } else {
+          nivelEl.textContent = "Fechado";
+          trackState.textContent = "Movimento conclu\u00eddo.";
+        }
+      }
+
+      sliderFrame = requestAnimationFrame(step);
+    }
+
+    function labelFromLevel(level) {
+      if (level === "alto") return "Fogo alto";
+      if (level === "medio") return "Fogo m\u00e9dio";
+      if (level === "baixo") return "Fogo baixo";
+      return "Fechado";
+    }
+
+    function irPara(level) {
+      const deg = calibration[level];
+      setPosition(labelFromLevel(level), deg, true);
+      trackState.textContent = `Indo para ${labelFromLevel(level).toLowerCase()}.`;
+    }
+
+    function marcar(level) {
+      const deg = calibration[level];
+      setPosition(labelFromLevel(level), deg, false);
+      trackState.textContent = `Posi\u00e7\u00e3o sincronizada como ${labelFromLevel(level).toLowerCase()} (sem mover motor).`;
+    }
+
+    function salvarCalibracao(level) {
+      calibration[level] = Math.round(Number(slider.value));
+      saveCalibration();
+      setPosition(labelFromLevel(level), calibration[level], true);
+      updateCalValues();
+      trackState.textContent = `${labelFromLevel(level)} salvo em ${calibration[level]}\u00b0.`;
+    }
+
+    function liberarServo() {
+      servoEl.textContent = "liberado";
+      trackState.textContent = "Servo liberado para movimento manual.";
+    }
+
+    function fechar() {
+      cancelarTimer();
+      animateSliderTo(calibration.fechado);
+    }
+
+    function mover(value) {
+      setPosition("Manual", value, true);
+      trackState.textContent = "Ajuste manual de calibra\u00e7\u00e3o.";
+    }
+
+    function iniciarTimer() {
+      const minutes = Math.max(0, parseInt(document.getElementById("timerMin").value || "0", 10));
+      const seconds = Math.max(0, parseInt(document.getElementById("timerSec").value || "0", 10));
+      const totalSeconds = Math.max(1, minutes * 60 + Math.min(59, seconds));
+      timerEnd = Date.now() + totalSeconds * 1000;
+      clearInterval(timerId);
+      timerId = setInterval(updateTimer, 250);
+      updateTimer();
+    }
+
+    function cancelarTimer() {
+      clearInterval(timerId);
+      timerId = null;
+      timerEnd = 0;
+      tempoEl.textContent = "00:00";
+    }
+
+    function updateTimer() {
+      const remaining = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+      tempoEl.textContent = formatSeconds(remaining);
+
+      if (remaining === 0) {
+        clearInterval(timerId);
+        timerId = null;
+        animateSliderTo(calibration.fechado);
+        statusPanel.classList.add("alarm");
+        setTimeout(() => statusPanel.classList.remove("alarm"), 6000);
+      }
+    }
+
+    updateCalValues();
+  </script>
+</body>
+
+</html>

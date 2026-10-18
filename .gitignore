@@ -1,0 +1,13 @@
+# Ignorar arquivos PDF conforme solicitado
+*.pdf
+
+# Arquivos temporarios e backups
+*.tmp
+*.bak
+*.rar
+*~
+Thumbs.db
+Desktop.ini
+
+# Logs locais
+*.log

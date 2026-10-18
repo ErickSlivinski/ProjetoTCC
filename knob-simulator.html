@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador do Man&iacute;pulo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f5f2;
+      --ink: #1f2933;
+      --muted: #667085;
+      --panel: #ffffff;
+      --line: #d7dce2;
+      --glass: #111418;
+      --primary: #0f766e;
+      --danger: #b42318;
+      --metal: #d5d9df;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #ffffff 0, var(--bg) 260px);
+      color: var(--ink);
+    }
+
+    main {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 7vw, 44px);
+      line-height: 1;
+    }
+
+    p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(290px, 0.65fr);
+      gap: 16px;
+      margin-top: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 8px 22px rgba(16, 24, 40, 0.07);
+    }
+
+    .cooktop {
+      position: relative;
+      aspect-ratio: 1.22 / 1;
+      min-height: 360px;
+      border-radius: 10px;
+      overflow: hidden;
+      background:
+        linear-gradient(140deg, rgba(255,255,255,.16), transparent 28%),
+        radial-gradient(circle at 34% 34%, rgba(255,255,255,.08), transparent 22%),
+        var(--glass);
+      border: 1px solid #2f3338;
+    }
+
+    .edge {
+      position: absolute;
+      inset: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 7px;
+      pointer-events: none;
+    }
+
+    .burner {
+      position: absolute;
+      left: 27%;
+      top: 37%;
+      width: min(36vw, 260px);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, #151719 0 32%, #0c0d0f 33% 43%, #eef1f3 44% 48%, #767d85 49% 52%, #14171a 53% 100%);
+      box-shadow: 0 20px 40px rgba(0,0,0,.35);
+    }
+
+    .grate span {
+      position: absolute;
+      left: 27%;
+      top: 37%;
+      width: min(45vw, 330px);
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #2d3035, #050607);
+      transform-origin: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,.35);
+    }
+
+    .grate span:nth-child(1) { transform: translate(-50%, -50%) rotate(28deg); }
+    .grate span:nth-child(2) { transform: translate(-50%, -50%) rotate(118deg); }
+    .grate span:nth-child(3) { width: min(31vw, 230px); transform: translate(-50%, -50%) rotate(-22deg); }
+    .grate span:nth-child(4) { width: min(31vw, 230px); transform: translate(-50%, -50%) rotate(68deg); }
+
+    .knob-area {
+      position: absolute;
+      right: 13%;
+      bottom: 19%;
+      width: 170px;
+      height: 170px;
+    }
+
+    .arc {
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 12px solid transparent;
+      border-left-color: rgba(255,255,255,.82);
+      border-bottom-color: rgba(255,255,255,.82);
+      transform: rotate(-34deg);
+      opacity: .9;
+    }
+
+    .tick {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 3px;
+      height: 13px;
+      border-radius: 999px;
+      background: #e9eef2;
+      transform-origin: 50% 72px;
+    }
+
+    .tick.off { transform: translate(-50%, -72px) rotate(0deg); }
+    .tick.low { transform: translate(-50%, -72px) rotate(-72deg); }
+    .tick.high { transform: translate(-50%, -72px) rotate(-180deg); }
+
+    .knob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 96px;
+      height: 96px;
+      transform: translate(-50%, -50%) rotate(0deg);
+      transform-origin: center;
+      border-radius: 50%;
+      background:
+        linear-gradient(145deg, #555b63, #1b1f24 58%, #0d1014);
+      box-shadow:
+        inset 8px 10px 18px rgba(255,255,255,.11),
+        inset -12px -10px 20px rgba(0,0,0,.42),
+        0 18px 30px rgba(0,0,0,.38);
+      transition: transform 900ms cubic-bezier(.2,.85,.18,1);
+    }
+
+    .knob::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      width: 5px;
+      height: 24px;
+      border-radius: 999px;
+      background: #f3f6f8;
+      transform: translateX(-50%);
+      box-shadow: 0 1px 2px rgba(0,0,0,.35);
+    }
+
+    .knob::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 48px;
+      height: 48px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 34% 26%, #727984, #242930 68%);
+    }
+
+    .servo-body {
+      position: absolute;
+      right: 19%;
+      bottom: 4%;
+      width: 98px;
+      height: 56px;
+      border-radius: 6px;
+      background: linear-gradient(180deg, #2e6ea5, #184a72);
+      border: 1px solid rgba(255,255,255,.25);
+      box-shadow: 0 14px 26px rgba(0,0,0,.35);
+      color: #dff3ff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .servo-arm {
+      position: absolute;
+      right: calc(19% + 46px);
+      bottom: calc(4% + 52px);
+      width: 94px;
+      height: 8px;
+      border-radius: 999px;
+      background: #e7edf3;
+      transform-origin: 10px 50%;
+      transform: rotate(0deg);
+      transition: transform 900ms cubic-bezier(.2,.85,.18,1);
+      box-shadow: 0 5px 10px rgba(0,0,0,.22);
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      color: var(--muted);
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    input[type="number"] {
+      width: 120px;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      padding: 0 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      cursor: pointer;
+      font-weight: 700;
+      min-height: 42px;
+      padding: 0 14px;
+    }
+
+    button.danger { background: var(--danger); }
+    button.secondary { background: #344054; }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .metric:first-child { border-top: 0; }
+
+    .value {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 820px) {
+      .layout { grid-template-columns: 1fr; }
+      .cooktop { min-height: 330px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Simulador do man&iacute;pulo</h1>
+    <p>Pr&eacute;-visualiza&ccedil;&atilde;o do giro no contexto do cooktop. &Eacute; uma simula&ccedil;&atilde;o visual: o valor real ainda depende da montagem e calibra&ccedil;&atilde;o.</p>
+
+    <section class="layout">
+      <div class="cooktop panel" aria-label="Simulacao visual do cooktop">
+        <div class="edge"></div>
+        <div class="burner"></div>
+        <div class="grate">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="knob-area">
+          <div class="arc"></div>
+          <span class="tick off"></span>
+          <span class="tick high"></span>
+          <span class="tick low"></span>
+          <div class="knob" id="knob"></div>
+        </div>
+
+        <div class="servo-arm" id="servoArm"></div>
+        <div class="servo-body">SERVO</div>
+      </div>
+
+      <aside class="panel controls">
+        <div>
+          <label for="angleSlider">&Acirc;ngulo enviado ao servo</label>
+          <input id="angleSlider" type="range" min="0" max="180" value="0">
+        </div>
+
+        <div class="row">
+          <input id="angleInput" type="number" min="0" max="180" value="0" aria-label="Angulo em graus">
+          <button type="button" onclick="goToInput()">Ir</button>
+        </div>
+
+        <div class="row">
+          <button type="button" class="danger" onclick="goTo(0)">Fechado</button>
+          <button type="button" onclick="goTo(180)">Alto</button>
+          <button type="button" onclick="goTo(120)">M&eacute;dio</button>
+          <button type="button" onclick="goTo(70)">Baixo</button>
+        </div>
+
+        <div>
+          <div class="metric">
+            <span>Comando</span>
+            <span class="value" id="angleLabel">0&deg;</span>
+          </div>
+          <div class="metric">
+            <span>Leitura real</span>
+            <span class="value">n&atilde;o dispon&iacute;vel</span>
+          </div>
+          <div class="metric">
+            <span>Estado visual</span>
+            <span class="value" id="stateLabel">Fechado</span>
+          </div>
+        </div>
+
+        <p class="note">Neste desenho, 0&deg; fica fechado com o indicador para cima. Ao aumentar o valor, o man&iacute;pulo gira para a esquerda, em sentido anti-hor&aacute;rio. Em 180&deg;, o fogo alto fica para baixo.</p>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const slider = document.getElementById("angleSlider");
+    const input = document.getElementById("angleInput");
+    const knob = document.getElementById("knob");
+    const servoArm = document.getElementById("servoArm");
+    const angleLabel = document.getElementById("angleLabel");
+    const stateLabel = document.getElementById("stateLabel");
+
+    function clamp(value) {
+      return Math.max(0, Math.min(180, Number(value) || 0));
+    }
+
+    function stateFromAngle(angle) {
+      if (angle <= 12) return "Fechado";
+      if (angle < 95) return "Fogo baixo";
+      if (angle < 150) return "Fogo m\u00e9dio";
+      return "Fogo alto";
+    }
+
+    function render(angle) {
+      const value = clamp(angle);
+      slider.value = value;
+      input.value = value;
+      angleLabel.textContent = `${Math.round(value)}\u00b0`;
+      stateLabel.textContent = stateFromAngle(value);
+
+      const visualRotation = -value;
+      knob.style.transform = `translate(-50%, -50%) rotate(${visualRotation}deg)`;
+      servoArm.style.transform = `rotate(${visualRotation}deg)`;
+    }
+
+    function goTo(angle) {
+      render(angle);
+    }
+
+    function goToInput() {
+      render(input.value);
+    }
+
+    slider.addEventListener("input", () => render(slider.value));
+    input.addEventListener("change", goToInput);
+    render(0);
+  </script>
+</body>
+</html>
