@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Esquema de Ligação - ESP32 DevKit V1 e Servo MG90S - FogãoServoWeb</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --paper: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #1f3a5f;
+      --red: #c62828;
+      --black: #111827;
+      --brown: #8d5524;
+      --orange: #e65100;
+      --blue: #1565c0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      margin: 0;
+      padding: 32px 20px 48px;
+      line-height: 1.5;
+    }
+    .page {
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+    header {
+      border-bottom: 3px solid var(--accent);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+    header .kicker {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 4px;
+    }
+    header h1 {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0;
+    }
+    header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Carimbo do projeto */
+    .info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      border: 1px solid var(--line);
+      background: var(--paper);
+      margin-bottom: 24px;
+    }
+    .info div {
+      padding: 10px 14px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      margin: 0 -1px -1px 0;
+    }
+    .info span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .info strong {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      margin-bottom: 24px;
+    }
+    section > h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #f9fafb;
+      color: var(--accent);
+    }
+    .section-body { padding: 16px; }
+
+    .svg-scroll { overflow-x: auto; }
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 760px;
+      height: auto;
+      background: #fff;
+    }
+
+    /* Legenda de cores */
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .swatches span { display: inline-flex; align-items: center; gap: 8px; }
+    .swatches i {
+      display: inline-block;
+      width: 26px;
+      height: 5px;
+      border-radius: 2px;
+    }
+
+    /* Tabela */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      background: #f9fafb;
+      font-weight: 600;
+    }
+    td.num {
+      width: 44px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .table-scroll { overflow-x: auto; }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    ul.notes {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 14px;
+    }
+    ul.notes li { margin-bottom: 8px; }
+    ul.notes li.warn::marker { color: var(--red); }
+    .warn-label { color: var(--red); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header>
+      <p class="kicker">TCC · Automação Industrial</p>
+      <h1>Esquema de ligação – FogãoServoWeb</h1>
+      <p>Conexões entre ESP32 DevKit V1, servo MG90S, fonte 6 V e Power Bank, com emendas por conectores Wago.</p>
+    </header>
+
+    <div class="info">
+      <div><span>Controlador</span><strong>ESP32 DOIT DevKit V1 (30 pinos)</strong></div>
+      <div><span>Atuador</span><strong>Micro servo MG90S (engrenagens de metal)</strong></div>
+      <div><span>Alimentação do servo</span><strong>Fonte 6 V / 3 A</strong></div>
+      <div><span>Alimentação do ESP32</span><strong>Power Bank 5 V via Micro-USB</strong></div>
+      <div><span>Emendas</span><strong>2 × Wago, 3 entradas cada</strong></div>
+      <div><span>Pino de controle</span><strong>GPIO26 (D26), sinal PWM</strong></div>
+    </div>
+
+    <section>
+      <h2>1. Diagrama de ligações</h2>
+      <div class="svg-scroll">
+        <svg viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama de ligações do ESP32, servo MG90S, fonte 6V e conectores Wago">
+
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eef0f3" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="980" height="560" fill="#ffffff"/>
+          <rect width="980" height="560" fill="url(#grid)"/>
+
+          <!-- ============ POWER BANK ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+            <rect x="40" y="50" width="140" height="220" rx="12" fill="#e5e7eb" stroke="#4b5563" stroke-width="1.5"/>
+            <rect x="60" y="70" width="100" height="12" rx="3" fill="#9ca3af"/>
+            <text x="110" y="150" fill="#1f2937" font-size="14" font-weight="600" text-anchor="middle">POWER BANK</text>
+            <text x="110" y="168" fill="#4b5563" font-size="11" text-anchor="middle">Saída USB 5 V</text>
+            <rect x="80" y="240" width="60" height="16" rx="3" fill="#374151"/>
+            <text x="110" y="232" fill="#4b5563" font-size="10" text-anchor="middle">USB OUT</text>
+          </g>
+
+          <!-- ============ ESP32 ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+            <rect x="200" y="55" width="175" height="240" rx="6" fill="#1f2937" stroke="#111827" stroke-width="1.5"/>
+            <!-- módulo Wi-Fi -->
+            <rect x="235" y="65" width="105" height="90" rx="3" fill="#d1d5db" stroke="#9ca3af"/>
+            <text x="287" y="105" fill="#111827" font-size="11" font-weight="600" text-anchor="middle">ESP32 DevKit V1</text>
+            <text x="287" y="122" fill="#4b5563" font-size="9" text-anchor="middle">DOIT / WROOM-32</text>
+            <!-- botões -->
+            <rect x="215" y="240" width="14" height="14" rx="2" fill="#e5e7eb"/>
+            <text x="222" y="268" fill="#d1d5db" font-size="8" text-anchor="middle">EN</text>
+            <rect x="345" y="240" width="14" height="14" rx="2" fill="#e5e7eb"/>
+            <text x="352" y="268" fill="#d1d5db" font-size="8" text-anchor="middle">BOOT</text>
+            <!-- Micro-USB -->
+            <rect x="262" y="225" width="50" height="16" rx="2" fill="#e5e7eb" stroke="#9ca3af"/>
+            <text x="287" y="219" fill="#d1d5db" font-size="8" text-anchor="middle">Micro-USB 5 V</text>
+
+            <!-- pinos -->
+            <g fill="#d4a017">
+              <circle cx="210" cy="80" r="3"/><circle cx="210" cy="92" r="3"/><circle cx="210" cy="104" r="3"/>
+              <circle cx="210" cy="116" r="3"/><circle cx="210" cy="128" r="3"/><circle cx="210" cy="140" r="3"/>
+              <circle cx="210" cy="152" r="3"/><circle cx="210" cy="164" r="3"/><circle cx="210" cy="176" r="3"/>
+              <circle cx="210" cy="188" r="3"/><circle cx="210" cy="200" r="3"/><circle cx="210" cy="212" r="3"/>
+              <circle cx="210" cy="224" r="3"/><circle cx="210" cy="236" r="3"/><circle cx="210" cy="248" r="3"/>
+              <circle cx="365" cy="80" r="3"/><circle cx="365" cy="92" r="3"/><circle cx="365" cy="104" r="3"/>
+              <circle cx="365" cy="116" r="3"/><circle cx="365" cy="128" r="3"/><circle cx="365" cy="152" r="3"/>
+              <circle cx="365" cy="164" r="3"/><circle cx="365" cy="176" r="3"/><circle cx="365" cy="188" r="3"/>
+              <circle cx="365" cy="200" r="3"/><circle cx="365" cy="212" r="3"/><circle cx="365" cy="224" r="3"/>
+              <circle cx="365" cy="248" r="3"/>
+            </g>
+            <!-- pinos usados -->
+            <circle cx="365" cy="140" r="5.5" fill="#fb923c" stroke="#ffffff" stroke-width="1.5"/>
+            <text x="352" y="144" fill="#fdba74" font-size="11" font-weight="600" text-anchor="end">D26 (GPIO26)</text>
+            <circle cx="365" cy="236" r="5.5" fill="#f9fafb" stroke="#9ca3af" stroke-width="1.5"/>
+            <text x="352" y="240" fill="#f9fafb" font-size="11" font-weight="600" text-anchor="end">GND</text>
+          </g>
+
+          <!-- ============ FONTE 6V ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+            <rect x="40" y="380" width="130" height="150" rx="6" fill="#e5e7eb" stroke="#4b5563" stroke-width="1.5"/>
+            <text x="105" y="416" fill="#1f2937" font-size="13" font-weight="600" text-anchor="middle">FONTE 6 V 3 A</text>
+            <text x="105" y="434" fill="#4b5563" font-size="11" text-anchor="middle">Entrada: tomada AC</text>
+            <text x="105" y="500" fill="#4b5563" font-size="10" text-anchor="middle">Saída: plug P4 / borne</text>
+          </g>
+
+          <!-- ============ WAGO A (POSITIVO) ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+            <rect x="500" y="130" width="130" height="90" rx="6" fill="#f3f4f6" stroke="#c62828" stroke-width="2.5"/>
+            <rect x="508" y="145" width="114" height="10" rx="3" fill="#b8860b" opacity="0.55"/>
+            <rect x="508" y="170" width="114" height="10" rx="3" fill="#b8860b" opacity="0.55"/>
+            <rect x="508" y="195" width="114" height="10" rx="3" fill="#b8860b" opacity="0.55"/>
+            <rect x="496" y="143" width="10" height="14" rx="2" fill="#374151"/>
+            <rect x="496" y="193" width="10" height="14" rx="2" fill="#374151"/>
+            <rect x="624" y="168" width="10" height="14" rx="2" fill="#374151"/>
+            <rect x="516" y="141" width="44" height="18" rx="4" fill="#f28c28" stroke="#b45f06"/>
+            <rect x="516" y="191" width="44" height="18" rx="4" fill="#f28c28" stroke="#b45f06"/>
+            <rect x="570" y="166" width="44" height="18" rx="4" fill="#f28c28" stroke="#b45f06"/>
+            <text x="538" y="153.5" fill="#3b1f00" font-size="9" font-weight="600" text-anchor="middle">Fonte</text>
+            <text x="538" y="203.5" fill="#3b1f00" font-size="9" font-weight="600" text-anchor="middle">Livre</text>
+            <text x="592" y="178.5" fill="#3b1f00" font-size="9" font-weight="600" text-anchor="middle">Servo</text>
+            <text x="565" y="120" fill="#c62828" font-size="12" font-weight="600" text-anchor="middle">WAGO A  ( + 6 V )</text>
+          </g>
+
+          <!-- ============ WAGO B (NEGATIVO) ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+            <rect x="500" y="310" width="130" height="90" rx="6" fill="#f3f4f6" stroke="#111827" stroke-width="2.5"/>
+            <rect x="508" y="325" width="114" height="10" rx="3" fill="#b8860b" opacity="0.55"/>
+            <rect x="508" y="350" width="114" height="10" rx="3" fill="#b8860b" opacity="0.55"/>
+            <rect x="508" y="375" width="114" height="10" rx="3" fill="#b8860b" opacity="0.55"/>
+            <rect x="496" y="323" width="10" height="14" rx="2" fill="#374151"/>
+            <rect x="496" y="373" width="10" height="14" rx="2" fill="#374151"/>
+            <rect x="624" y="348" width="10" height="14" rx="2" fill="#374151"/>
+            <rect x="516" y="321" width="44" height="18" rx="4" fill="#f28c28" stroke="#b45f06"/>
+            <rect x="516" y="371" width="44" height="18" rx="4" fill="#f28c28" stroke="#b45f06"/>
+            <rect x="570" y="346" width="44" height="18" rx="4" fill="#f28c28" stroke="#b45f06"/>
+            <text x="538" y="333.5" fill="#3b1f00" font-size="9" font-weight="600" text-anchor="middle">ESP32</text>
+            <text x="538" y="383.5" fill="#3b1f00" font-size="9" font-weight="600" text-anchor="middle">Fonte</text>
+            <text x="592" y="358.5" fill="#3b1f00" font-size="9" font-weight="600" text-anchor="middle">Servo</text>
+            <text x="565" y="428" fill="#111827" font-size="12" font-weight="600" text-anchor="middle">WAGO B  ( GND )</text>
+          </g>
+
+          <!-- ============ SERVO MG90S ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif">
+            <rect x="760" y="140" width="145" height="110" rx="4" fill="#2b4a6f" stroke="#1b324d" stroke-width="1.5"/>
+            <rect x="745" y="170" width="15" height="45" rx="2" fill="#1b324d"/>
+            <circle cx="752" cy="180" r="2.5" fill="#e5e7eb"/>
+            <circle cx="752" cy="205" r="2.5" fill="#e5e7eb"/>
+            <rect x="905" y="170" width="15" height="45" rx="2" fill="#1b324d"/>
+            <circle cx="912" cy="180" r="2.5" fill="#e5e7eb"/>
+            <circle cx="912" cy="205" r="2.5" fill="#e5e7eb"/>
+            <circle cx="795" cy="170" r="18" fill="#c9a24a" stroke="#8a6d1f" stroke-width="2"/>
+            <rect x="788" y="120" width="14" height="85" rx="5" fill="#f9fafb" stroke="#9ca3af" transform="rotate(30 795 170)"/>
+            <circle cx="795" cy="170" r="5" fill="#3b2a0a"/>
+            <text x="830" y="195" fill="#ffffff" font-size="13" font-weight="600">MG90S</text>
+            <text x="830" y="211" fill="#dbe7f5" font-size="9.5">Metal gear</text>
+            <text x="830" y="225" fill="#dbe7f5" font-size="9.5">~2,2 kgf·cm a 6 V</text>
+            <!-- conector 3 vias -->
+            <rect x="735" y="225" width="22" height="30" rx="2" fill="#f3f4f6" stroke="#4b5563"/>
+            <text x="746" y="236" fill="#4b5563" font-size="7" text-anchor="middle">S</text>
+            <text x="746" y="246" fill="#4b5563" font-size="7" text-anchor="middle">+</text>
+            <text x="746" y="256" fill="#4b5563" font-size="7" text-anchor="middle">−</text>
+          </g>
+
+          <!-- ============ FIOS ============ -->
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <!-- 1 USB -->
+            <path d="M 110 256 Q 110 320 220 320 L 220 241" stroke="#1565c0" stroke-width="5"/>
+            <!-- 2 +6V fonte -> Wago A -->
+            <path d="M 170 430 L 450 430 L 450 150 L 500 150" stroke="#c62828" stroke-width="4"/>
+            <!-- 3 GND fonte -> Wago B -->
+            <path d="M 170 450 L 470 450 L 470 380 L 500 380" stroke="#111827" stroke-width="4"/>
+            <!-- 4 GND ESP32 -> Wago B (com salto sobre o fio +6V) -->
+            <path d="M 365 236 L 410 236 L 410 330 L 444 330 a 6 6 0 0 1 12 0 L 500 330" stroke="#111827" stroke-width="4"/>
+            <!-- 5 Wago A -> servo VCC -->
+            <path d="M 630 175 L 670 175 L 670 240 L 735 240" stroke="#c62828" stroke-width="3.5"/>
+            <!-- 6 Wago B -> servo GND -->
+            <path d="M 630 355 L 690 355 L 690 250 L 735 250" stroke="#8d5524" stroke-width="3.5"/>
+            <!-- 7 sinal D26 -> servo -->
+            <path d="M 365 140 Q 400 140 400 100 L 690 100 Q 710 100 710 120 L 710 230 L 735 230" stroke="#e65100" stroke-width="3.5"/>
+          </g>
+
+          <!-- ============ MARCADORES NUMERADOS ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" fill="#1f3a5f">
+            <g><circle cx="110" cy="286" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="110" y="290">1</text></g>
+            <g><circle cx="400" cy="430" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="400" y="434">2</text></g>
+            <g><circle cx="410" cy="283" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="410" y="287">4</text></g>
+            <g><circle cx="670" cy="208" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="670" y="212">5</text></g>
+            <g><circle cx="690" cy="305" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="690" y="309">6</text></g>
+            <g><circle cx="470" cy="100" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="470" y="104">7</text></g>
+            <g><circle cx="320" cy="450" r="10" fill="#fff" stroke="#1f3a5f" stroke-width="1.5"/><text x="320" y="454">3</text></g>
+          </g>
+
+          <!-- ============ RÓTULOS ============ -->
+          <g font-family="Segoe UI, Roboto, Arial, sans-serif" font-size="11">
+            <text x="135" y="342" fill="#1565c0" font-weight="600">Cabo Micro-USB</text>
+            <text x="180" y="422" fill="#c62828" font-weight="600">+6 V (fio vermelho da fonte)</text>
+            <text x="180" y="468" fill="#111827" font-weight="600">GND (fio preto da fonte)</text>
+            <text x="402" y="318" fill="#111827" font-weight="600" text-anchor="end">GND comum</text>
+            <text x="580" y="90" fill="#e65100" font-weight="600" text-anchor="middle">Sinal PWM (D26)</text>
+            <text x="745" y="282" fill="#e65100" font-weight="600">Laranja: sinal</text>
+            <text x="745" y="297" fill="#c62828" font-weight="600">Vermelho: VCC</text>
+            <text x="745" y="312" fill="#8d5524" font-weight="600">Marrom: GND</text>
+          </g>
+
+        </svg>
+      </div>
+      <div class="swatches">
+        <span><i style="background:var(--red)"></i>+6 V</span>
+        <span><i style="background:var(--black)"></i>GND (terra comum)</span>
+        <span><i style="background:var(--brown)"></i>GND do servo</span>
+        <span><i style="background:var(--orange)"></i>Sinal PWM</span>
+        <span><i style="background:var(--blue)"></i>Cabo USB (5 V)</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Lista de ligações</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Nº</th><th>Origem</th><th>Destino</th><th>Fio</th><th>Função</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">1</td><td>Power Bank (USB OUT)</td><td>ESP32 (Micro-USB)</td><td><span class="dot" style="background:var(--blue)"></span>Cabo USB</td><td>Alimenta o ESP32 com 5 V</td></tr>
+            <tr><td class="num">2</td><td>Fonte 6 V (+)</td><td>Wago A, entrada 1</td><td><span class="dot" style="background:var(--red)"></span>Vermelho</td><td>Leva o +6 V ao ponto de emenda</td></tr>
+            <tr><td class="num">3</td><td>Fonte 6 V (−)</td><td>Wago B, entrada 2</td><td><span class="dot" style="background:var(--black)"></span>Preto</td><td>Retorno da fonte</td></tr>
+            <tr><td class="num">4</td><td>ESP32, pino GND</td><td>Wago B, entrada 1</td><td><span class="dot" style="background:var(--black)"></span>Preto</td><td>Terra comum entre ESP32, fonte e servo</td></tr>
+            <tr><td class="num">5</td><td>Wago A, entrada 3</td><td>Servo, fio VCC</td><td><span class="dot" style="background:var(--red)"></span>Vermelho</td><td>Alimenta o servo com 6 V</td></tr>
+            <tr><td class="num">6</td><td>Wago B, entrada 3</td><td>Servo, fio GND</td><td><span class="dot" style="background:var(--brown)"></span>Marrom</td><td>Retorno do servo</td></tr>
+            <tr><td class="num">7</td><td>ESP32, D26 (GPIO26)</td><td>Servo, fio de sinal</td><td><span class="dot" style="background:var(--orange)"></span>Laranja</td><td>Sinal PWM de posição (sem passar pelos Wagos)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Observações de montagem</h2>
+      <div class="section-body">
+        <ul class="notes">
+          <li class="warn"><span class="warn-label">Atenção:</span> nunca ligue os 6 V da fonte ao pino 3V3 ou VIN do ESP32. O servo é o único componente alimentado pela fonte.</li>
+          <li>O <strong>Wago B</strong> une os três GND (ESP32, fonte e servo). Sem esse terra comum, o sinal PWM não é interpretado corretamente.</li>
+          <li>O <strong>Wago A</strong> tem uma entrada livre, que pode ser usada depois para outra carga de 6 V.</li>
+          <li>Em cada Wago: abra a alavanca, insira o fio descascado (cerca de 11 mm), feche a alavanca e puxe levemente para confirmar a fixação.</li>
+          <li>O MG90S, com engrenagens de metal, entrega cerca de 2,2 kgf·cm a 6 V. O par de engrenagens 3D do projeto multiplica esse torque no manípulo.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
