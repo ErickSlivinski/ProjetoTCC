@@ -1,4 +1,4 @@
-# Ignorar arquivos PDF conforme solicitado
+# Ignorar arquivos PDF
 *.pdf
 
 # Arquivos temporarios e backups
