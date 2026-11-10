@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Esquema de Ligação - ESP32 DevKit V1 e Servo MG90S - FogãoServoWeb</title>
+  <title>Esquema de Ligação - ESP32 DevKit V1 e Servo MG996R - FogãoServoWeb</title>
   <style>
     :root {
       --bg: #f3f4f6;
@@ -174,13 +174,13 @@
     <header>
       <p class="kicker">TCC · Automação Industrial</p>
       <h1>Esquema de ligação – FogãoServoWeb</h1>
-      <p>Conexões entre ESP32 DevKit V1, servo MG90S, fonte 6 V e Power Bank, com emendas por conectores Wago.</p>
+      <p>Conexões entre ESP32 DevKit V1, servo MG996R, fonte 6 V e Power Bank, com emendas por conectores Wago.</p>
     </header>
 
     <div class="info">
       <div><span>Controlador</span><strong>ESP32 DOIT DevKit V1 (30 pinos)</strong></div>
-      <div><span>Atuador</span><strong>Micro servo MG90S (engrenagens de metal)</strong></div>
-      <div><span>Alimentação do servo</span><strong>Fonte 6 V / 3 A</strong></div>
+      <div><span>Atuador</span><strong>Servo Motor MG996R (Metal Gear, 11-13 kgfÂ·cm)</strong></div>
+      <div><span>Alimentação do servo</span><strong>Fonte 6 V / 3 A (Dedicada)</strong></div>
       <div><span>Alimentação do ESP32</span><strong>Power Bank 5 V via Micro-USB</strong></div>
       <div><span>Emendas</span><strong>2 × Wago, 3 entradas cada</strong></div>
       <div><span>Pino de controle</span><strong>GPIO26 (D26), sinal PWM</strong></div>
@@ -189,7 +189,7 @@
     <section>
       <h2>1. Diagrama de ligações</h2>
       <div class="svg-scroll">
-        <svg viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama de ligações do ESP32, servo MG90S, fonte 6V e conectores Wago">
+        <svg viewBox="0 0 980 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama de ligações do ESP32, servo MG996R, fonte 6 V e conectores Wago">
 
           <defs>
             <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -289,26 +289,53 @@
             <text x="565" y="428" fill="#111827" font-size="12" font-weight="600" text-anchor="middle">WAGO B  ( GND )</text>
           </g>
 
-          <!-- ============ SERVO MG90S ============ -->
+          <!-- ============ SERVO MG996R (ALTO TORQUE / CORPO STANDARD) ============ -->
           <g font-family="Segoe UI, Roboto, Arial, sans-serif">
-            <rect x="760" y="140" width="145" height="110" rx="4" fill="#2b4a6f" stroke="#1b324d" stroke-width="1.5"/>
-            <rect x="745" y="170" width="15" height="45" rx="2" fill="#1b324d"/>
-            <circle cx="752" cy="180" r="2.5" fill="#e5e7eb"/>
-            <circle cx="752" cy="205" r="2.5" fill="#e5e7eb"/>
-            <rect x="905" y="170" width="15" height="45" rx="2" fill="#1b324d"/>
-            <circle cx="912" cy="180" r="2.5" fill="#e5e7eb"/>
-            <circle cx="912" cy="205" r="2.5" fill="#e5e7eb"/>
-            <circle cx="795" cy="170" r="18" fill="#c9a24a" stroke="#8a6d1f" stroke-width="2"/>
-            <rect x="788" y="120" width="14" height="85" rx="5" fill="#f9fafb" stroke="#9ca3af" transform="rotate(30 795 170)"/>
-            <circle cx="795" cy="170" r="5" fill="#3b2a0a"/>
-            <text x="830" y="195" fill="#ffffff" font-size="13" font-weight="600">MG90S</text>
-            <text x="830" y="211" fill="#dbe7f5" font-size="9.5">Metal gear</text>
-            <text x="830" y="225" fill="#dbe7f5" font-size="9.5">~2,2 kgf·cm a 6 V</text>
-            <!-- conector 3 vias -->
-            <rect x="735" y="225" width="22" height="30" rx="2" fill="#f3f4f6" stroke="#4b5563"/>
-            <text x="746" y="236" fill="#4b5563" font-size="7" text-anchor="middle">S</text>
-            <text x="746" y="246" fill="#4b5563" font-size="7" text-anchor="middle">+</text>
-            <text x="746" y="256" fill="#4b5563" font-size="7" text-anchor="middle">−</text>
+            <!-- Abas de fixacao com ilhoses duplos padrao Standard -->
+            <rect x="736" y="145" width="22" height="75" rx="3" fill="#1a1d20" stroke="#111827" stroke-width="1.5"/>
+            <circle cx="744" cy="158" r="3.2" fill="#d1d5db" stroke="#374151"/>
+            <circle cx="744" cy="207" r="3.2" fill="#d1d5db" stroke="#374151"/>
+            <circle cx="744" cy="158" r="1.5" fill="#111827"/>
+            <circle cx="744" cy="207" r="1.5" fill="#111827"/>
+
+            <rect x="912" y="145" width="22" height="75" rx="3" fill="#1a1d20" stroke="#111827" stroke-width="1.5"/>
+            <circle cx="926" cy="158" r="3.2" fill="#d1d5db" stroke="#374151"/>
+            <circle cx="926" cy="207" r="3.2" fill="#d1d5db" stroke="#374151"/>
+            <circle cx="926" cy="158" r="1.5" fill="#111827"/>
+            <circle cx="926" cy="207" r="1.5" fill="#111827"/>
+
+            <!-- Corpo principal preto fosco do MG996R -->
+            <rect x="754" y="125" width="162" height="118" rx="6" fill="#212529" stroke="#0f1113" stroke-width="2"/>
+            
+            <!-- Frisos de encaixe da carcaca do servo -->
+            <line x1="754" y1="150" x2="916" y2="150" stroke="#343a40" stroke-width="1.5"/>
+            <line x1="754" y1="218" x2="916" y2="218" stroke="#343a40" stroke-width="1.5"/>
+
+            <!-- Ressalto circular superior do trem de engrenagens -->
+            <circle cx="798" cy="165" r="23" fill="#2b3035" stroke="#1c2024" stroke-width="1.5"/>
+
+            <!-- Eixo estriado 25T de latao metalico dourado -->
+            <circle cx="798" cy="165" r="14" fill="#d4af37" stroke="#aa820a" stroke-width="2"/>
+            
+            <!-- Braco / Horn do Servo em nylon branco reforcado -->
+            <rect x="790" y="105" width="16" height="100" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5" transform="rotate(28 798 165)"/>
+            <circle cx="798" cy="165" r="6" fill="#0f172a"/>
+            <circle cx="798" cy="165" r="3" fill="#64748b"/>
+            <circle cx="818" cy="122" r="1.8" fill="#64748b"/>
+            <circle cx="828" cy="104" r="1.8" fill="#64748b"/>
+
+            <!-- Etiqueta do MG996R com detalhe dourado -->
+            <rect x="836" y="162" width="72" height="48" rx="3" fill="#0d0f12" stroke="#d4af37" stroke-width="1"/>
+            <rect x="836" y="162" width="72" height="8" rx="1" fill="#d4af37"/>
+            <text x="872" y="184" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">MG996R</text>
+            <text x="872" y="196" fill="#facc15" font-size="8.5" font-weight="600" text-anchor="middle">DIGI HI-TORQUE</text>
+            <text x="872" y="206" fill="#94a3b8" font-size="8" text-anchor="middle">13 kgfÂ·cm / Metal</text>
+
+            <!-- Conector 3 vias (JR/Futaba) -->
+            <rect x="735" y="225" width="22" height="30" rx="2" fill="#1f2428" stroke="#4b5563" stroke-width="1"/>
+            <text x="746" y="236" fill="#fb923c" font-size="7.5" font-weight="700" text-anchor="middle">S</text>
+            <text x="746" y="246" fill="#f87171" font-size="7.5" font-weight="700" text-anchor="middle">+</text>
+            <text x="746" y="256" fill="#9ca3af" font-size="7.5" font-weight="700" text-anchor="middle">âˆ’</text>
           </g>
 
           <!-- ============ FIOS ============ -->
