@@ -1,4 +1,4 @@
-#include <Arduino.h>
+﻿#include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <ESP32Servo.h>
@@ -39,6 +39,9 @@ int rampFromDeg = POS_FECHADO;
 int rampToDeg = POS_FECHADO;
 uint32_t rampStartMs = 0;
 uint32_t rampDurationMs = 0;
+bool holdActive = false;
+uint32_t holdStartMs = 0;
+static const uint32_t HOLD_TORQUE_MS = 450; // Mantém torque energizado para esmagar vedação e fechar 100%
 
 bool timerRunning = false;
 uint32_t timerStartMs = 0;
@@ -1044,7 +1047,7 @@ void attachServoIfNeeded() {
   }
 
   servoMotor.setPeriodHertz(50);
-  servoMotor.attach(SERVO_PIN, 500, 2500);
+  servoMotor.attach(SERVO_PIN, 450, 2550);
   servoAttached = true;
 }
 
