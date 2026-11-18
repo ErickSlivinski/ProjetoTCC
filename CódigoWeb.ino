@@ -1052,6 +1052,7 @@ void attachServoIfNeeded() {
 }
 
 void releaseServo() {
+  holdActive = false;
   if (!servoAttached) {
     return;
   }
@@ -1335,8 +1336,15 @@ void handleSetServo() {
   timerRunning = false;
   targetDeg = clampInt(pos, 0, 180);
   level = targetDeg == calFechado ? NIVEL_FECHADO : NIVEL_MANUAL;
-  // Rampa curta (300ms) para o slider: servo chega suavemente e libera sozinho
-  startMove(targetDeg, 300UL);
+
+  // Calculo de rampa suave proporcional a distancia (15ms por grau, min 450ms, max 2500ms)
+  // Elimina trancos e movimentos bruscos ao clicar ou arrastar o slider
+  int diffDeg = abs(targetDeg - currentDeg);
+  uint32_t moveDuration = (uint32_t)diffDeg * 15UL;
+  if (moveDuration < 450UL) moveDuration = 450UL;
+  if (moveDuration > 2500UL) moveDuration = 2500UL;
+
+  startMove(targetDeg, moveDuration);
   sendStatus();
 }
 
@@ -1375,8 +1383,10 @@ void updateMotionAndTimer() {
     if (elapsed >= rampDurationMs) {
       writeServoLogical(rampToDeg);
       rampActive = false;
-      moving = false;
-      releaseServo(); // Libera automaticamente ao fim de qualquer movimento
+      // Inicia retencao de torque para assentar e esmagar a vedacao (evita recuo elástico)
+      holdActive = true;
+      holdStartMs = now;
+      moving = true;
     } else {
       const int delta = rampToDeg - rampFromDeg;
       const int deg = rampFromDeg + (int)((int32_t)delta * (int32_t)elapsed / (int32_t)rampDurationMs);
@@ -1384,6 +1394,13 @@ void updateMotionAndTimer() {
         writeServoLogical(deg);
       }
       moving = true;
+    }
+  } else if (holdActive) {
+    // Garante que o motor segura a posicao antes de desenergizar
+    if (now - holdStartMs >= HOLD_TORQUE_MS) {
+      holdActive = false;
+      moving = false;
+      releaseServo();
     }
   }
 
