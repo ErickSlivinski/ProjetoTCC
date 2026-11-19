@@ -4,7 +4,7 @@ Firmware Arduino para ESP32 e sistema de automação e controle remoto seguro pa
 
 ---
 
-## 🚀 Novidades da Versão 2.0 (Montagem Atualizada)
+##  Novidades da Versão 2.0 (Montagem Atualizada)
 
 - **Servo Motor MG996R:** Substituição do micro servo SG90 pelo MG996R com engrenagens de metal e torque de até **13 kgf.cm**, eliminando perda de força e garantindo rotação firme contra a mola da válvula.
 - **Transmissão Externa por Engrenagens Paralelas:**
@@ -19,7 +19,7 @@ Firmware Arduino para ESP32 e sistema de automação e controle remoto seguro pa
 
 ---
 
-## ⚙️ Recursos
+##  Recursos
 
 - ESP32 em modo Access Point com SSID `FOGAO-ESP32`.
 - Página web responsiva em português servida em `http://192.168.4.1`.
@@ -33,7 +33,7 @@ Firmware Arduino para ESP32 e sistema de automação e controle remoto seguro pa
 
 ---
 
-## 📚 Bibliotecas Necessárias
+##  Bibliotecas Necessárias
 
 Instale pela Arduino IDE:
 - `ESP32Servo`
@@ -54,7 +54,7 @@ Instale pela Arduino IDE:
 
 ---
 
-## 🔄 Funcionamento e Modo Standby (Auto-Release)
+##  Funcionamento e Modo Standby (Auto-Release)
 
 Um servo comum de hobby não envia a posição real de volta para o ESP32. O firmware gerencia o movimento de forma inteligente e segura:
 
@@ -67,7 +67,7 @@ Um servo comum de hobby não envia a posição real de volta para o ESP32. O fir
 
 ---
 
-## 🛠️ Ajustes Importantes no Firmware
+##  Ajustes Importantes no Firmware
 
 No arquivo `FogaoServoWeb.ino`, calibre estes valores para o seu mecanismo:
 
@@ -88,7 +88,7 @@ static const char *AP_PASSWORD = "12345678";
 
 ---
 
-## 🌐 Rotas HTTP
+##  Rotas HTTP
 
 - `GET /`: Interface web.
 - `GET /status`: Retorna estado, timer, posição assumida e se o servo está anexado (JSON).
@@ -107,7 +107,7 @@ static const char *AP_PASSWORD = "12345678";
 
 ---
 
-## 📖 Passo a Passo para o Uso
+##  Passo a Passo para o Uso
 
 ### 1. Preparar o Computador
 1. Instale a Arduino IDE.
@@ -146,7 +146,7 @@ static const bool INVERT_SERVO_DIRECTION = false; // ou true
 
 ---
 
-## 📁 Estrutura de Arquivos Principais
+##  Estrutura de Arquivos Principais
 
 - `MontagemGeralFinal.stl` — Montagem 3D completa de todo o conjunto.
 - `BaseComManipulo.stl` — Subconjunto da base de comando com o manípulo do fogão.
