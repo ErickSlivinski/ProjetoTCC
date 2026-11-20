@@ -43,17 +43,6 @@ Instale pela Arduino IDE:
 
 ---
 
-## 🔌 Ligação Sugerida
-
-- **Sinal do servo (fio laranja/amarelo):** GPIO26 do ESP32.
-- **VCC do servo (fio vermelho):** Fonte 5V a 6V estável e dedicada (mínimo 2.5A a 3A para torque máximo do MG996R).
-- **GND do servo (fio marrom/preto):** GND da fonte externa e GND do ESP32 interligados (**GND comum obrigatório**).
-
-> [!WARNING]
-> Use fonte externa dedicada com corrente suficiente para o servo MG996R. Nunca alimente o servo diretamente pelo pino 5V/3.3V do ESP32 ou pela porta USB. Teste os ângulos com o fogão desligado antes de acoplar ao manípulo.
-
----
-
 ##  Funcionamento e Modo Standby (Auto-Release)
 
 Um servo comum de hobby não envia a posição real de volta para o ESP32. O firmware gerencia o movimento de forma inteligente e segura:
