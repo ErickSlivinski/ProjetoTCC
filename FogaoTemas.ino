@@ -37,10 +37,6 @@ int rampFromDeg = POS_FECHADO;
 int rampToDeg = POS_FECHADO;
 uint32_t rampStartMs = 0;
 uint32_t rampDurationMs = 0;
-bool holdActive = false;
-uint32_t holdStartMs = 0;
-static const uint32_t HOLD_TORQUE_MS = 500; // Mantém torque energizado para assentar vedação e fechar 100%
-
 bool timerRunning = false;
 uint32_t timerStartMs = 0;
 uint32_t timerDurationMs = 10UL * 60UL * 1000UL;
@@ -719,6 +715,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
           <button class="secondary" onclick="marcar('fechado')" data-i18n="marcar_fechado">✔ Marcar Fechado</button>
           <button class="secondary" onclick="marcar('alto')"   data-i18n="marcar_alto">Marcar Alto</button>
           <button class="secondary" onclick="marcar('baixo')"  data-i18n="marcar_baixo">Marcar Baixo</button>
+          <button class="secondary" onclick="liberarServo()"   data-i18n="liberar_btn">🔓 Liberar servo</button>
         </div>
 
         <hr class="divider">
@@ -875,6 +872,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         marcar_fechado:  "✔ Marcar Fechado",
         marcar_alto:     "Marcar Alto",
         marcar_baixo:    "Marcar Baixo",
+        liberar_btn:     "🔓 Liberar servo",
         girar:           "Girar manípulo com o servo:",
         ir_alto:         "Ir para Alto",
         ir_baixo:        "Ir para Baixo",
@@ -893,7 +891,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         movendo:         "Movendo servo...",
         fechando:        "Fechando automaticamente...",
         concluido:       "Movimento concluído.",
-        aviso:           'Não force o manípulo contra o servo energizado. O servo é liberado automaticamente ao fim de cada movimento; só gire na mão com o servo liberado.',
+        aviso:           'Não force o manípulo contra o servo energizado. Para girar na mão, clique em "Liberar servo" antes.',
         liberado:        "liberado",
         lvl_Fechado:     "Fechado",
         lvl_FogoAlto:    "Fogo alto",
@@ -921,6 +919,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         marcar_fechado:  "✔ Mark Closed",
         marcar_alto:     "Mark High",
         marcar_baixo:    "Mark Low",
+        liberar_btn:     "🔓 Release servo",
         girar:           "Turn knob with servo:",
         ir_alto:         "Go to High",
         ir_baixo:        "Go to Low",
@@ -939,7 +938,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         movendo:         "Moving servo...",
         fechando:        "Closing automatically...",
         concluido:       "Movement complete.",
-        aviso:           'Do not force the knob against an energized servo. The servo is released automatically after each movement; only turn by hand while it is released.',
+        aviso:           'Do not force the knob against an energized servo. To turn by hand, click "Release servo" first.',
         liberado:        "released",
         lvl_Fechado:     "Closed",
         lvl_FogoAlto:    "High flame",
@@ -967,6 +966,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         marcar_fechado:  "✔ Marcar Cerrado",
         marcar_alto:     "Marcar Alto",
         marcar_baixo:    "Marcar Bajo",
+        liberar_btn:     "🔓 Liberar servo",
         girar:           "Girar perilla con el servo:",
         ir_alto:         "Ir a Alto",
         ir_baixo:        "Ir a Bajo",
@@ -985,7 +985,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         movendo:         "Moviendo servo...",
         fechando:        "Cerrando automáticamente...",
         concluido:       "Movimiento completado.",
-        aviso:           'No fuerce la perilla contra el servo energizado. El servo se libera automáticamente al final de cada movimiento; gire a mano solo con el servo liberado.',
+        aviso:           'No fuerce la perilla contra el servo energizado. Para girar a mano, haga clic en "Liberar servo" antes.',
         liberado:        "liberado",
         lvl_Fechado:     "Cerrado",
         lvl_FogoAlto:    "Llama alta",
@@ -1283,16 +1283,19 @@ void attachServoIfNeeded() {
 
   servoMotor.setPeriodHertz(50);
   servoMotor.attach(SERVO_PIN, 450, 2550);
+  servoMotor.write(logicalToServoDeg(currentDeg));
   servoAttached = true;
 }
 
 void releaseServo() {
-  holdActive = false;
   if (!servoAttached) {
     return;
   }
 
   servoMotor.detach();
+  pinMode(SERVO_PIN, OUTPUT);
+  digitalWrite(SERVO_PIN, LOW);
+  gpio_set_pull_mode((gpio_num_t)SERVO_PIN, GPIO_PULLDOWN_ONLY);
   servoAttached = false;
   moving = false;
   rampActive = false;
@@ -1403,9 +1406,8 @@ void handleClose() {
     targetDeg = calFechado;
     attachServoIfNeeded();
     writeServoLogical(calFechado);
-    holdActive = true;
-    holdStartMs = millis();
-    moving = true;
+    moving = false;
+    rampActive = false;
     sendStatus();
     return;
   }
@@ -1605,10 +1607,8 @@ void updateMotionAndTimer() {
     if (elapsed >= rampDurationMs) {
       writeServoLogical(rampToDeg);
       rampActive = false;
-      // Inicia retencao de torque para assentar e esmagar a vedacao (evita recuo elástico)
-      holdActive = true;
-      holdStartMs = now;
-      moving = true;
+      moving = false;
+      currentDeg = rampToDeg;
     } else {
       const int delta = rampToDeg - rampFromDeg;
       const int deg = rampFromDeg + (int)((int32_t)delta * (int32_t)elapsed / (int32_t)rampDurationMs);
@@ -1616,13 +1616,6 @@ void updateMotionAndTimer() {
         writeServoLogical(deg);
       }
       moving = true;
-    }
-  } else if (holdActive) {
-    // Garante que o motor segura a posicao antes de desenergizar
-    if (now - holdStartMs >= HOLD_TORQUE_MS) {
-      holdActive = false;
-      moving = false;
-      releaseServo();
     }
   }
 
@@ -1642,7 +1635,6 @@ void setup() {
 
   attachServoIfNeeded();
   writeServoLogical(calFechado);
-  releaseServo();
 
   WiFi.mode(WIFI_AP);
   WiFi.softAP(AP_SSID, AP_PASSWORD);
