@@ -13,7 +13,6 @@ static const bool INVERT_SERVO_DIRECTION = true;
 // Valores iniciais. Podem ser alterados pela tela de calibracao enquanto o ESP32 estiver ligado.
 static const int POS_FECHADO = 0;
 static const int POS_FOGO_ALTO = 180;
-static const int POS_FOGO_MEDIO = 120;
 static const int POS_FOGO_BAIXO = 60;
 static const uint32_t DEFAULT_MOVE_MS = 2500; // Movimento suave e lento para garantir torque maximo do servo
 
@@ -21,7 +20,6 @@ enum FlameLevel {
   NIVEL_DESCONHECIDO,
   NIVEL_FECHADO,
   NIVEL_ALTO,
-  NIVEL_MEDIO,
   NIVEL_BAIXO,
   NIVEL_MANUAL
 };
@@ -41,7 +39,7 @@ uint32_t rampStartMs = 0;
 uint32_t rampDurationMs = 0;
 bool holdActive = false;
 uint32_t holdStartMs = 0;
-static const uint32_t HOLD_TORQUE_MS = 450; // Mantém torque energizado para esmagar vedação e fechar 100%
+static const uint32_t HOLD_TORQUE_MS = 500; // Mantém torque energizado para assentar vedação e fechar 100%
 
 bool timerRunning = false;
 uint32_t timerStartMs = 0;
@@ -51,7 +49,6 @@ uint32_t lastSerialStatusMs = 0;
 FlameLevel level = NIVEL_FECHADO;
 int calFechado = POS_FECHADO;
 int calAlto = POS_FOGO_ALTO;
-int calMedio = POS_FOGO_MEDIO;
 int calBaixo = POS_FOGO_BAIXO;
 
 const char INDEX_HTML[] PROGMEM = R"HTML(
@@ -64,7 +61,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
   <style>
     /* ══════════════════════════════════════════
        SISTEMA DE TEMAS
-       claro · escuro (padrao) · barbie · minecraft · brasa
+       claro · escuro (padrao) · barbie · minecraft
        Sem fontes/imagens externas: o Wi-Fi do ESP32 nao tem internet.
     ══════════════════════════════════════════ */
 
@@ -232,54 +229,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
       --track-bg:#373737; --track-h:16px; --track-bw:2px; --track-r:0px; --track-bd:2px solid #000; --track-shadow:inset 2px 2px 0 #1a1a1a;
       --thumb-bg:#c6c6c6; --thumb-bd:2px solid #000; --thumb-w:16px; --thumb-h:30px; --thumb-r:0px;
       --thumb-shadow:inset 2px 2px 0 #fff, inset -2px -2px 0 #6b6b6b;
-    }
-
-    /* ---------- TEMA: BRASA (chamas e fagulhas) ---------- */
-    [data-theme="brasa"] {
-      --bg:#130d0b; --bg-solid:#221510; --bg-card:rgba(34,21,16,0.82);
-      --bg-nested:linear-gradient(135deg,#2e1a12,#3a1f12);
-      --bg-topbar:rgba(19,13,11,0.88);
-      --body-bg:
-        radial-gradient(720px 480px at 50% 108%, rgba(255,90,20,0.42), transparent 70%),
-        radial-gradient(520px 380px at 0% 100%,  rgba(240,69,26,0.26), transparent 70%),
-        radial-gradient(520px 380px at 100% 100%, rgba(255,194,71,0.20), transparent 70%),
-        #130d0b;
-      --text:#ffeadb; --text-sec:#f2cdb8; --text-muted:#b98f7a;
-      --border:#4d2c1d; --border-fine:#7a4429;
-      --accent:#ff7a2b; --accent-2:#ffc247;
-      --accent-soft:rgba(255,122,43,0.16); --glow:rgba(255,106,31,0.50);
-      --btn-bg:linear-gradient(135deg,#ffc247 0%,#ff7a1f 50%,#f0451a 100%); --btn-text:#1b0a04;
-      --btn-sec-bg:rgba(60,32,20,0.80); --btn-sec-text:#ffb27a; --sec-hover:rgba(255,122,43,0.18);
-      --input-bg:#2a1912;
-      --shadow:0 10px 30px rgba(0,0,0,0.45), 0 1px 0 rgba(255,160,90,0.12) inset;
-      --danger:#ff8a7a; --danger-bd:#9c3d2d; --danger-hover:rgba(255,90,60,0.12);
-
-      --brand: var(--accent-2); --label-color: var(--accent); --strong: var(--accent-2);
-      --timer: var(--accent-2); --deg-color: var(--accent-2);
-      --metric-bd: var(--border);
-      --lang-active-bg: var(--btn-bg); --lang-active-text:#1b0a04; --lang-active-bd:transparent;
-      --lang-active-shadow:0 2px 10px var(--glow);
-      --warn-bg:rgba(255,122,43,0.10); --warn-bd:rgba(255,122,43,0.30);
-      --cal-color: var(--text-sec); --cal-bd: var(--border);
-
-      --font-serif:"Trebuchet MS", ui-rounded, ui-sans-serif, system-ui, sans-serif;
-      --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-
-      --r-sm:12px; --r-md:20px; --r-btn:14px;
-      --bw:1.5px; --blur:8px;
-      --btn-sec-border:1.5px solid var(--border-fine);
-      --btn-shadow:0 4px 16px var(--glow); --btn-shadow-hover:0 8px 24px var(--glow);
-      --shine:0.7; --lift:-1px; --hover-op:1;
-      --fw-head:800; --fw-btn:700; --fw-strong:800;
-      --head-align:center;
-      --sparkle:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='260'%20height='260'%3E%3Ccircle%20cx='73'%20cy='197'%20r='2.5'%20fill='%23ff9a3c'%20fill-opacity='0.55'/%3E%3Ccircle%20cx='206'%20cy='249'%20r='2'%20fill='%23ffd98a'%20fill-opacity='0.55'/%3E%3Ccircle%20cx='36'%20cy='103'%20r='3'%20fill='%23ffc247'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='147'%20cy='34'%20r='3.5'%20fill='%23ffd98a'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='195'%20cy='63'%20r='3'%20fill='%23ff7a1f'%20fill-opacity='0.85'/%3E%3Ccircle%20cx='242'%20cy='230'%20r='3'%20fill='%23ffc247'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='43'%20cy='166'%20r='3.5'%20fill='%23ff7a1f'%20fill-opacity='0.95'/%3E%3Ccircle%20cx='41'%20cy='8'%20r='1.5'%20fill='%23ffc247'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='50'%20cy='231'%20r='2'%20fill='%23ffc247'%20fill-opacity='0.85'/%3E%3Ccircle%20cx='58'%20cy='146'%20r='4.5'%20fill='%23f0451a'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='248'%20cy='184'%20r='2'%20fill='%23ffc247'%20fill-opacity='0.95'/%3E%3Ccircle%20cx='13'%20cy='100'%20r='3'%20fill='%23f0451a'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='75'%20cy='24'%20r='2.5'%20fill='%23ffc247'%20fill-opacity='0.85'/%3E%3Ccircle%20cx='158'%20cy='8'%20r='3.5'%20fill='%23ff9a3c'%20fill-opacity='0.85'/%3E%3Ccircle%20cx='87'%20cy='98'%20r='2.5'%20fill='%23ff7a1f'%20fill-opacity='0.95'/%3E%3Ccircle%20cx='55'%20cy='131'%20r='3'%20fill='%23f0451a'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='73'%20cy='248'%20r='1.5'%20fill='%23ff7a1f'%20fill-opacity='0.85'/%3E%3Ccircle%20cx='12'%20cy='148'%20r='3'%20fill='%23ffd98a'%20fill-opacity='0.85'/%3E%3Ccircle%20cx='156'%20cy='223'%20r='1.5'%20fill='%23ffd98a'%20fill-opacity='0.95'/%3E%3Ccircle%20cx='189'%20cy='54'%20r='3.5'%20fill='%23ff7a1f'%20fill-opacity='0.7'/%3E%3C/svg%3E");
-      --sp-size1:260px; --sp-size2:190px;
-      --fx1:rise 16s linear infinite; --fx2:rise2 24s linear infinite;
-      --topbar-bw:2px; --topbar-image:linear-gradient(90deg,#f0451a,#ffc247,#f0451a);
-
-      --track-bg:linear-gradient(90deg,#ffc247,#ff7a1f,#f0451a); --track-h:8px; --track-shadow:0 0 12px var(--glow);
-      --thumb-bg:radial-gradient(circle at 35% 30%, #fff6dc 0 18%, #ffc247 50%, #ff7a1f 100%);
-      --thumb-bd:2px solid #1b0a04; --thumb-w:24px; --thumb-h:24px; --thumb-shadow:0 0 12px var(--glow);
     }
 
     /* ══════════════ BASE ══════════════ */
@@ -638,16 +587,15 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
 
     /* ══════════════ EXTRAS POR TEMA ══════════════ */
 
-    /* titulo com degradê animado: barbie e brasa */
-    [data-theme="barbie"] h1, [data-theme="brasa"] h1 {
+    /* titulo com degradê animado: barbie */
+    [data-theme="barbie"] h1 {
       background-size: 220% 100%;
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; color: transparent;
       animation: shimmer 6s linear infinite;
       filter: drop-shadow(0 2px 8px var(--glow));
+      background-image: linear-gradient(100deg,#ff4fa8 0%,#e91e8c 30%,#a65ee8 55%,#ff74c0 80%,#ff4fa8 100%);
     }
-    [data-theme="barbie"] h1 { background-image: linear-gradient(100deg,#ff4fa8 0%,#e91e8c 30%,#a65ee8 55%,#ff74c0 80%,#ff4fa8 100%); }
-    [data-theme="brasa"]  h1 { background-image: linear-gradient(100deg,#ffd36b 0%,#ff7a1f 30%,#f0451a 55%,#ffb02e 80%,#ffd36b 100%); }
 
     /* barbie: brilhos */
     [data-theme="barbie"] .clay-dot { width: auto; height: auto; background: none; border-radius: 0; box-shadow: none; }
@@ -663,15 +611,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
       font-size: 0.4em; vertical-align: middle; position: relative; top: -10px;
       animation: twinkle 2.6s ease-in-out infinite 0.8s;
     }
-
-    /* brasa */
-    [data-theme="brasa"] h1::before {
-      content: '🔥'; width: auto; height: auto; background: none; border-radius: 0;
-      font-size: 0.7em; top: -3px; margin-right: 8px;
-      -webkit-text-fill-color: initial;
-    }
-    [data-theme="brasa"] .panel { border-top: 2px solid var(--accent); }
-    [data-theme="brasa"] .clay-dot { background: radial-gradient(circle at 40% 35%, #fff3c4, #ff7a1f 60%, #f0451a); animation: twinkle 1.6s ease-in-out infinite; }
 
     /* minecraft */
     [data-theme="minecraft"] .clay-dot {
@@ -779,7 +718,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         <div class="row">
           <button class="secondary" onclick="marcar('fechado')" data-i18n="marcar_fechado">✔ Marcar Fechado</button>
           <button class="secondary" onclick="marcar('alto')"   data-i18n="marcar_alto">Marcar Alto</button>
-          <button class="secondary" onclick="marcar('medio')"  data-i18n="marcar_medio">Marcar Médio</button>
           <button class="secondary" onclick="marcar('baixo')"  data-i18n="marcar_baixo">Marcar Baixo</button>
         </div>
 
@@ -788,7 +726,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         <span class="field-label row-label" data-i18n="girar">Girar manípulo com o servo:</span>
         <div class="row">
           <button onclick="irPara('alto')"  data-i18n="ir_alto">Ir para Alto</button>
-          <button onclick="irPara('medio')" data-i18n="ir_medio">Ir para Médio</button>
           <button onclick="irPara('baixo')" data-i18n="ir_baixo">Ir para Baixo</button>
           <button class="danger" onclick="fechar()" data-i18n="fechar_agora">Fechar agora</button>
         </div>
@@ -828,10 +765,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         <div class="row" style="margin-top:12px;">
           <button class="secondary" onclick="salvarCalibracao('fechado')" data-i18n="salvar_fechado">Salvar fechado</button>
           <button class="secondary" onclick="salvarCalibracao('alto')"    data-i18n="salvar_alto">Salvar alto</button>
-          <button class="secondary" onclick="salvarCalibracao('medio')"   data-i18n="salvar_medio">Salvar médio</button>
           <button class="secondary" onclick="salvarCalibracao('baixo')"   data-i18n="salvar_baixo">Salvar baixo</button>
         </div>
-        <div class="cal-values" id="calValues">Fechado: -- | Alto: -- | Médio: -- | Baixo: --</div>
+        <div class="cal-values" id="calValues">Fechado: -- | Alto: -- | Baixo: --</div>
         <div class="warn-note" data-i18n="aviso">
           Não force o manípulo contra o servo energizado. O servo é liberado automaticamente ao fim de cada movimento; só gire na mão com o servo liberado.
         </div>
@@ -852,8 +788,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
       { id: "claro",     g: 0, c: ["#f8f8f6", "#ffffff", "#d97757", "#121212"] },
       { id: "escuro",    g: 0, c: ["#1a1916", "#2a2925", "#d97757", "#f0ede8"] },
       { id: "barbie",    g: 1, c: ["#ffd6ee", "#ffffff", "#e91e8c", "#a65ee8"] },
-      { id: "minecraft", g: 1, c: ["#866043", "#c6c6c6", "#5f9a3c", "#ffff55"] },
-      { id: "brasa",     g: 1, c: ["#14100e", "#3a1f12", "#ff7a2b", "#ffc247"] }
+      { id: "minecraft", g: 1, c: ["#866043", "#c6c6c6", "#5f9a3c", "#ffff55"] }
     ];
 
     function currentTheme() { return htmlEl.getAttribute("data-theme") || "claro"; }
@@ -939,11 +874,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         sincronizar:     "Sincronizar posição atual (sem mover motor):",
         marcar_fechado:  "✔ Marcar Fechado",
         marcar_alto:     "Marcar Alto",
-        marcar_medio:    "Marcar Médio",
         marcar_baixo:    "Marcar Baixo",
         girar:           "Girar manípulo com o servo:",
         ir_alto:         "Ir para Alto",
-        ir_medio:        "Ir para Médio",
         ir_baixo:        "Ir para Baixo",
         fechar_agora:    "Fechar agora",
         timer_titulo:    "Timer de cozimento",
@@ -955,7 +888,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         calib_desc:      "Ajuste o slider com o fogão desligado. Quando o ângulo bater com a posição desejada, salve esse valor no botão correspondente.",
         salvar_fechado:  "Salvar fechado",
         salvar_alto:     "Salvar alto",
-        salvar_medio:    "Salvar médio",
         salvar_baixo:    "Salvar baixo",
         aguardando:      "Aguardando comando.",
         movendo:         "Movendo servo...",
@@ -965,7 +897,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         liberado:        "liberado",
         lvl_Fechado:     "Fechado",
         lvl_FogoAlto:    "Fogo alto",
-        lvl_FogoMedio:   "Fogo médio",
         lvl_FogoBaixo:   "Fogo baixo",
         lvl_Manual:      "Manual",
         lvl_Desc:        "Desconhecido",
@@ -974,10 +905,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
           claro:     ["Claro", "Creme, o visual original"],
           escuro:    ["Escuro", "Grafite quente, o original"],
           barbie:    ["Rosa glitter", "Rosa, lilás e brilhos"],
-          minecraft: ["Minecraft", "Terra, grama e blocos"],
-          brasa:     ["Brasa", "Chamas e fagulhas no escuro"]
+          minecraft: ["Minecraft", "Terra, grama e blocos"]
         },
-        cal: (f,a,m,b) => `Fechado: ${f}° | Alto: ${a}° | Médio: ${m}° | Baixo: ${b}°`,
+        cal: (f,a,b) => `Fechado: ${f}° | Alto: ${a}° | Baixo: ${b}°`,
       },
       en: {
         title:           "Stove — 1 knob",
@@ -990,11 +920,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         sincronizar:     "Sync current position (without moving motor):",
         marcar_fechado:  "✔ Mark Closed",
         marcar_alto:     "Mark High",
-        marcar_medio:    "Mark Medium",
         marcar_baixo:    "Mark Low",
         girar:           "Turn knob with servo:",
         ir_alto:         "Go to High",
-        ir_medio:        "Go to Medium",
         ir_baixo:        "Go to Low",
         fechar_agora:    "Close now",
         timer_titulo:    "Cooking timer",
@@ -1006,7 +934,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         calib_desc:      "Adjust the slider with the stove off. When the angle matches the desired position, save that value using the corresponding button.",
         salvar_fechado:  "Save closed",
         salvar_alto:     "Save high",
-        salvar_medio:    "Save medium",
         salvar_baixo:    "Save low",
         aguardando:      "Waiting for command.",
         movendo:         "Moving servo...",
@@ -1016,7 +943,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         liberado:        "released",
         lvl_Fechado:     "Closed",
         lvl_FogoAlto:    "High flame",
-        lvl_FogoMedio:   "Medium flame",
         lvl_FogoBaixo:   "Low flame",
         lvl_Manual:      "Manual",
         lvl_Desc:        "Unknown",
@@ -1025,10 +951,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
           claro:     ["Light", "Cream, the original look"],
           escuro:    ["Dark", "Warm graphite, the original"],
           barbie:    ["Pink glitter", "Pink, lilac and sparkles"],
-          minecraft: ["Minecraft", "Dirt, grass and blocks"],
-          brasa:     ["Ember", "Flames and sparks in the dark"]
+          minecraft: ["Minecraft", "Dirt, grass and blocks"]
         },
-        cal: (f,a,m,b) => `Closed: ${f}° | High: ${a}° | Medium: ${m}° | Low: ${b}°`,
+        cal: (f,a,b) => `Closed: ${f}° | High: ${a}° | Low: ${b}°`,
       },
       es: {
         title:           "Cocina — 1 perilla",
@@ -1041,11 +966,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         sincronizar:     "Sincronizar posición actual (sin mover motor):",
         marcar_fechado:  "✔ Marcar Cerrado",
         marcar_alto:     "Marcar Alto",
-        marcar_medio:    "Marcar Medio",
         marcar_baixo:    "Marcar Bajo",
         girar:           "Girar perilla con el servo:",
         ir_alto:         "Ir a Alto",
-        ir_medio:        "Ir a Medio",
         ir_baixo:        "Ir a Bajo",
         fechar_agora:    "Cerrar ahora",
         timer_titulo:    "Temporizador de cocción",
@@ -1057,7 +980,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         calib_desc:      "Ajuste el control deslizante con la cocina apagada. Cuando el ángulo coincida, guarde ese valor con el botón correspondiente.",
         salvar_fechado:  "Guardar cerrado",
         salvar_alto:     "Guardar alto",
-        salvar_medio:    "Guardar medio",
         salvar_baixo:    "Guardar bajo",
         aguardando:      "Esperando comando.",
         movendo:         "Moviendo servo...",
@@ -1067,7 +989,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
         liberado:        "liberado",
         lvl_Fechado:     "Cerrado",
         lvl_FogoAlto:    "Llama alta",
-        lvl_FogoMedio:   "Llama media",
         lvl_FogoBaixo:   "Llama baja",
         lvl_Manual:      "Manual",
         lvl_Desc:        "Desconocido",
@@ -1076,10 +997,9 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
           claro:     ["Claro", "Crema, el diseño original"],
           escuro:    ["Oscuro", "Grafito cálido, el original"],
           barbie:    ["Rosa glitter", "Rosa, lila y brillos"],
-          minecraft: ["Minecraft", "Tierra, césped y bloques"],
-          brasa:     ["Brasa", "Llamas y chispas en la oscuridad"]
+          minecraft: ["Minecraft", "Tierra, césped y bloques"]
         },
-        cal: (f,a,m,b) => `Cerrado: ${f}° | Alto: ${a}° | Medio: ${m}° | Bajo: ${b}°`,
+        cal: (f,a,b) => `Cerrado: ${f}° | Alto: ${a}° | Bajo: ${b}°`,
       }
     };
 
@@ -1155,7 +1075,6 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
     function formatLevel(level) {
       const t = LANGS[currentLang];
       const map = {
-        "Fogo medio":   t.lvl_FogoMedio,
         "Desconhecido": t.lvl_Desc,
         "Fechado":      t.lvl_Fechado,
         "Fogo alto":    t.lvl_FogoAlto,
@@ -1281,7 +1200,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
     function updateCalDisplay() {
       if (!lastCal) return;
       const t = LANGS[currentLang];
-      calValuesEl.textContent = t.cal(lastCal.fechado, lastCal.alto, lastCal.medio, lastCal.baixo);
+      calValuesEl.textContent = t.cal(lastCal.fechado, lastCal.alto, lastCal.baixo);
     }
 
     async function updateStatus() {
@@ -1347,8 +1266,6 @@ const char *levelName(FlameLevel value) {
       return "Fechado";
     case NIVEL_ALTO:
       return "Fogo alto";
-    case NIVEL_MEDIO:
-      return "Fogo medio";
     case NIVEL_BAIXO:
       return "Fogo baixo";
     case NIVEL_MANUAL:
@@ -1424,20 +1341,18 @@ void loadCalibration() {
   preferences.begin("fogao", false);
   calFechado = preferences.getInt("fechado", POS_FECHADO);
   calAlto = preferences.getInt("alto", POS_FOGO_ALTO);
-  calMedio = preferences.getInt("medio", POS_FOGO_MEDIO);
   calBaixo = preferences.getInt("baixo", POS_FOGO_BAIXO);
 }
 
 void saveCalibration() {
   preferences.putInt("fechado", calFechado);
   preferences.putInt("alto", calAlto);
-  preferences.putInt("medio", calMedio);
   preferences.putInt("baixo", calBaixo);
 }
 
 void sendStatus() {
   String json;
-  json.reserve(260);
+  json.reserve(240);
   json += "{\"nivel\":\"";
   json += levelName(level);
   json += "\",\"timerAtivo\":";
@@ -1459,8 +1374,6 @@ void sendStatus() {
   json += String(calFechado);
   json += ",\"alto\":";
   json += String(calAlto);
-  json += ",\"medio\":";
-  json += String(calMedio);
   json += ",\"baixo\":";
   json += String(calBaixo);
   json += "}";
@@ -1483,14 +1396,16 @@ void handleClose() {
     currentDeg = fromDeg;
   }
 
-  // Se já estiver na posição de fechado (ou muito perto, diferença < 3 graus),
-  // não executa movimento algum para evitar dar meia-volta ou forçar o batente mecânico
-  if (abs(currentDeg - calFechado) <= 3) {
+  // Se já estiver na posição de fechado ou muito próximo (<= 2 graus),
+  // energiza e aplica torque direto em calFechado para garantir assentamento completo e estanqueidade
+  if (abs(currentDeg - calFechado) <= 2) {
     currentDeg = calFechado;
     targetDeg = calFechado;
-    moving = false;
-    rampActive = false;
-    releaseServo();
+    attachServoIfNeeded();
+    writeServoLogical(calFechado);
+    holdActive = true;
+    holdStartMs = millis();
+    moving = true;
     sendStatus();
     return;
   }
@@ -1512,7 +1427,7 @@ void handleCancelTimer() {
 
 void handleMark() {
   if (!server.hasArg("level")) {
-    server.send(400, "application/json", "{\"erro\":\"Use level=alto, medio ou baixo\"}");
+    server.send(400, "application/json", "{\"erro\":\"Use level=fechado, alto ou baixo\"}");
     return;
   }
 
@@ -1527,10 +1442,6 @@ void handleMark() {
     currentDeg = calAlto;
     targetDeg = calAlto;
     level = NIVEL_ALTO;
-  } else if (requestedLevel == "medio") {
-    currentDeg = calMedio;
-    targetDeg = calMedio;
-    level = NIVEL_MEDIO;
   } else if (requestedLevel == "baixo") {
     currentDeg = calBaixo;
     targetDeg = calBaixo;
@@ -1547,7 +1458,7 @@ void handleMark() {
 
 void handleGotoLevel() {
   if (!server.hasArg("level")) {
-    server.send(400, "application/json", "{\"erro\":\"Use level=fechado, alto, medio ou baixo\"}");
+    server.send(400, "application/json", "{\"erro\":\"Use level=fechado, alto ou baixo\"}");
     return;
   }
 
@@ -1562,10 +1473,6 @@ void handleGotoLevel() {
     timerRunning = false;
     level = NIVEL_ALTO;
     startMove(calAlto, DEFAULT_MOVE_MS);
-  } else if (requestedLevel == "medio") {
-    timerRunning = false;
-    level = NIVEL_MEDIO;
-    startMove(calMedio, DEFAULT_MOVE_MS);
   } else if (requestedLevel == "baixo") {
     timerRunning = false;
     level = NIVEL_BAIXO;
@@ -1599,9 +1506,6 @@ void handleCalibrate() {
   } else if (requestedLevel == "alto") {
     calAlto = pos;
     level = NIVEL_ALTO;
-  } else if (requestedLevel == "medio") {
-    calMedio = pos;
-    level = NIVEL_MEDIO;
   } else if (requestedLevel == "baixo") {
     calBaixo = pos;
     level = NIVEL_BAIXO;
