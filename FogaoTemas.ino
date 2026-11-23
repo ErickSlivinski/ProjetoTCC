@@ -37,6 +37,9 @@ int rampFromDeg = POS_FECHADO;
 int rampToDeg = POS_FECHADO;
 uint32_t rampStartMs = 0;
 uint32_t rampDurationMs = 0;
+bool holdActive = false;
+uint32_t holdStartMs = 0;
+static const uint32_t HOLD_TORQUE_MS = 1200UL; // ms mantendo torque antes de liberar
 bool timerRunning = false;
 uint32_t timerStartMs = 0;
 uint32_t timerDurationMs = 10UL * 60UL * 1000UL;
@@ -1314,6 +1317,7 @@ void startMove(int deg, uint32_t moveMs) {
   rampStartMs = millis();
   rampDurationMs = moveMs < 100UL ? 100UL : moveMs;
   rampActive = true;
+  holdActive = false; // cancela qualquer hold pendente
   moving = true;
   attachServoIfNeeded();
 }
@@ -1400,14 +1404,15 @@ void handleClose() {
   }
 
   // Se já estiver na posição de fechado ou muito próximo (<= 2 graus),
-  // energiza e aplica torque direto em calFechado para garantir assentamento completo e estanqueidade
+  // energiza e aplica torque direto em calFechado para garantir assentamento completo
   if (abs(currentDeg - calFechado) <= 2) {
     currentDeg = calFechado;
     targetDeg = calFechado;
+    rampActive = false;
+    holdActive = false;
     attachServoIfNeeded();
     writeServoLogical(calFechado);
     moving = false;
-    rampActive = false;
     sendStatus();
     return;
   }
@@ -1605,10 +1610,11 @@ void updateMotionAndTimer() {
   if (rampActive) {
     const uint32_t elapsed = now - rampStartMs;
     if (elapsed >= rampDurationMs) {
+      // Rampa concluída: escreve e trava posição final, servo permanece energizado
       writeServoLogical(rampToDeg);
       rampActive = false;
+      holdActive = false;
       moving = false;
-      currentDeg = rampToDeg;
     } else {
       const int delta = rampToDeg - rampFromDeg;
       const int deg = rampFromDeg + (int)((int32_t)delta * (int32_t)elapsed / (int32_t)rampDurationMs);
