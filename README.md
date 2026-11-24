@@ -68,8 +68,8 @@ static const bool INVERT_SERVO_DIRECTION = true; // inverte o sentido de giro
 
 // Posições padrão (sobrescritas pela calibração salva)
 static const int POS_FECHADO    = 0;
-static const int POS_FOGO_ALTO  = 180;
-static const int POS_FOGO_BAIXO = 60;
+static const int POS_FOGO_ALTO  = 100;
+static const int POS_FOGO_BAIXO = 180;
 ```
 
 Para trocar a rede Wi-Fi criada pelo ESP32:
