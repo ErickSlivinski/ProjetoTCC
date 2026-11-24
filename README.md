@@ -4,143 +4,152 @@ Firmware Arduino para ESP32 e sistema de automação e controle remoto seguro pa
 
 ---
 
-##  Novidades da Versão 2.0 (Montagem Atualizada)
+## Versão Atual — Funcionalidades
 
-- **Servo Motor MG996R:** Substituição do micro servo SG90 pelo MG996R com engrenagens de metal e torque de até **13 kgf.cm**, eliminando perda de força e garantindo rotação firme contra a mola da válvula.
-- **Transmissão Externa por Engrenagens Paralelas:**
+- **Servo Motor MG996R:** Engrenagens de metal, torque de até **13 kgf.cm**, garantindo rotação firme contra a mola da válvula do fogão.
+- **Transmissão por Engrenagens Paralelas:**
   - **Engrenagem do Servo:** `Eng22DenteServo.stl` (22 dentes, Ø 34.5 mm)
   - **Engrenagem da Base da Válvula:** `Eng25DentesBase.stl` (25 dentes, Ø 36.5 mm, acoplamento D-shaft)
-  - **Distância entre Centros:** ~34.0 mm
-  - **Relação de Transmissão:** $i = 25/22 \approx 1.136$ (+13.6% de multiplicação de torque).
-- **Operação Híbrida e Segurança:**
-  - O manípulo pode ser operado manualmente a qualquer momento.
-  - O aplicativo gerencia com precisão o controle entre **Chama Alta**, **Chama Média**, **Chama Baixa** e **Desligamento/Fechamento Automático**.
-  - Por segurança contra liberação indevida de gás, o acendimento inicial a partir do fechado é feito presencialmente pelo usuário.
+  - **Relação de Transmissão:** $i = 25/22 \approx 1.136$ (+13.6% de multiplicação de torque)
+- **Interface Web Responsiva** com 4 temas visuais (claro, escuro, Barbie, Minecraft)
+- **Controle de 3 níveis:** Fogo Alto, Fogo Baixo e Fechado (sem fogo médio)
+- **Movimento suave:** Rampa proporcional à distância (15 ms/grau, mín. 450 ms, máx. 2500 ms)
+- **Timer automático** com minutos e segundos — fecha a válvula ao expirar
+- **Calibração pela tela:** ângulos salvos na memória permanente (`Preferences`)
+- **Internacionalização:** interface em Português, Inglês e Espanhol
+- **Operação híbrida:** botão **🔓 Liberar servo** no app desacopla o motor para operação manual sem forçar as engrenagens
 
 ---
 
-##  Recursos
+## Recursos do App
 
-- ESP32 em modo Access Point com SSID `FOGAO-ESP32`.
-- Página web responsiva em português servida em `http://192.168.4.1`.
-- Fluxo pensado para abertura manual e fechamento automático.
-- Calibração pela própria tela: ajuste o slider e salve o ângulo como fechado, alto, médio ou baixo.
-- Botões para ir diretamente para os valores calibrados: fogo alto, médio ou baixo.
-- Timer com minutos e segundos que fecha automaticamente a válvula ao expirar.
-- Animação visual do slider durante o fechamento automático ou acionamento por botão.
-- Slider manual de 0 a 180 graus para calibração fina.
-- Rota `/status` em JSON para atualização dinâmica em tempo real.
+- ESP32 em modo Access Point — SSID `FOGAO-ESP32`, senha `12345678`
+- Página web servida em `http://192.168.4.1`
+- Slider manual de 0 a 180° para calibração fina
+- Botões de nível: **Fogo Alto**, **Fogo Baixo**, **Fechar agora**
+- Rota `/status` em JSON para atualização em tempo real (polling a cada 500 ms)
+- Sincronização de posição via botão **Marcar posição atual** (sem acionar o motor)
 
 ---
 
-##  Bibliotecas Necessárias
+## Bibliotecas Necessárias
 
 Instale pela Arduino IDE:
 - `ESP32Servo`
 - Core de placas `esp32` para Arduino
 
-*(As bibliotecas `WiFi.h` e `WebServer.h` já fazem parte nativa do core ESP32).*
+*(As bibliotecas `WiFi.h`, `WebServer.h` e `Preferences.h` já fazem parte do core ESP32.)*
 
 ---
 
-##  Funcionamento e Modo Standby (Auto-Release)
+## Comportamento do Servo
 
-Um servo comum de hobby não envia a posição real de volta para o ESP32. O firmware gerencia o movimento de forma inteligente e segura:
+O MG996R **não reporta posição** de volta ao ESP32. O firmware gerencia o estado de forma segura:
 
-1. **Auto-Release Transparente:** Após QUALQUER comando de movimento (seja botões de nível, slider ou fechamento automático por timer), o servo se move de forma suave e **é liberado automaticamente (`releaseServo() / detach`)** logo ao final do percurso. Isso zera o consumo elétrico em repouso e permite girar o manípulo manualmente a qualquer momento sem forçar as engrenagens.
-2. **Acendimento Manual:** O usuário pressiona e gira o manípulo para acender o cooktop.
-3. **Controle e Calibração:** Pelo web app, o usuário pode navegar pelos níveis calibrados (alto, médio, baixo) ou ajustar o slider.
-4. **Fechamento Automático / Segurança:** Ao fechar pelo botão "Fechar agora" ou ao término do timer, o ESP32 acopla o servo, executa a rampa de fechamento até a posição calibrada como fechada e, em seguida, libera o servo novamente.
+1. **Movimento:** Ao acionar qualquer botão ou slider, o servo se acopla automaticamente e executa a rampa suave até o destino.
+2. **Hold:** Ao chegar na posição, o servo permanece energizado e travado, mantendo o manípulo no lugar.
+3. **Liberar manualmente:** O botão **🔓 Liberar servo** no app chama `releaseServo()` — o motor desacopla e o manípulo pode ser girado à mão.
+4. **Sincronizar após ajuste manual:** Use **Marcar posição atual** para informar ao sistema onde o manípulo está sem acionar o motor.
+5. **Fechamento pelo Timer:** Ao expirar, o servo acopla e executa o fechamento automaticamente.
 
-*Nota:* Os valores calibrados pela tela ficam gravados na memória permanente do ESP32 usando `Preferences`.
+> **Segurança:** O acendimento inicial (do fechado para a chama) é sempre feito presencialmente. O sistema foi projetado apenas para fechar ou reduzir a chama remotamente.
+
+*Os ângulos calibrados ficam gravados na flash do ESP32 e sobrevivem a reinicializações.*
 
 ---
 
-##  Ajustes Importantes no Firmware
+## Ajustes no Firmware
 
-No arquivo `FogaoServoWeb.ino`, calibre estes valores para o seu mecanismo:
+No arquivo `FogaoTemas.ino`, configure:
 
 ```cpp
-static const bool INVERT_SERVO_DIRECTION = true;
-static const int POS_FECHADO = 0;
-static const int POS_FOGO_ALTO = 70;
-static const int POS_FOGO_MEDIO = 115;
-static const int POS_FOGO_BAIXO = 160;
+static const int SERVO_PIN = 26;              // GPIO do sinal do servo
+static const bool INVERT_SERVO_DIRECTION = true; // inverte o sentido de giro
+
+// Posições padrão (sobrescritas pela calibração salva)
+static const int POS_FECHADO    = 0;
+static const int POS_FOGO_ALTO  = 180;
+static const int POS_FOGO_BAIXO = 60;
 ```
 
-Se quiser trocar a rede criada pelo ESP32:
+Para trocar a rede Wi-Fi criada pelo ESP32:
 
 ```cpp
-static const char *AP_SSID = "FOGAO-ESP32";
+static const char *AP_SSID     = "FOGAO-ESP32";
 static const char *AP_PASSWORD = "12345678";
 ```
 
 ---
 
-##  Rotas HTTP
+## Rotas HTTP
 
-- `GET /`: Interface web.
-- `GET /status`: Retorna estado, timer, posição assumida e se o servo está anexado (JSON).
-- `GET /fechar`: Fecha o manípulo e cancela timer.
-- `GET /abrir`: Marca fogo alto sem mover o servo, para compatibilidade.
-- `GET /setServo?pos=90`: Move manualmente o servo para calibração e cancela timer.
-- `POST /timer?min=10&sec=30`: Inicia timer.
-- `POST /setTimer?min=10&sec=30`: Alias de timer.
-- `POST /goto?level=alto`: Move para o valor calibrado de fogo alto.
-- `POST /goto?level=medio`: Move para o valor calibrado de fogo médio.
-- `POST /goto?level=baixo`: Move para o valor calibrado de fogo baixo.
-- `POST /calibrate?level=alto&pos=80`: Salva um ângulo calibrado na memória do ESP32.
-- `POST /mark?level=fechado|alto|medio|baixo`: Sincroniza a posição assumida sem acionar o motor.
-- `POST /release`: Libera/desanexa o servo para mover o manípulo manualmente.
-- `POST /cancelTimer`: Cancela o timer sem fechar.
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/` | Interface web |
+| `GET` | `/status` | Estado atual em JSON (nível, posição, timer, servo anexado) |
+| `GET` | `/fechar` | Fecha o manípulo e cancela o timer |
+| `GET` | `/abrir` | Atalho: marca fogo alto (compatibilidade) |
+| `GET` | `/setServo?pos=90` | Move para posição específica (0–180°) |
+| `POST` | `/timer?min=10&sec=30` | Inicia timer |
+| `POST` | `/setTimer?min=10&sec=30` | Alias de `/timer` |
+| `POST` | `/goto?level=alto` | Move para nível calibrado (`alto` ou `baixo`) |
+| `POST` | `/goto?level=baixo` | Move para nível calibrado de fogo baixo |
+| `POST` | `/calibrate?level=alto&pos=80` | Salva ângulo calibrado na memória |
+| `POST` | `/mark?level=fechado\|alto\|baixo` | Sincroniza posição assumida sem mover o motor |
+| `POST` | `/release` | Libera/desacopla o servo para operação manual |
+| `POST` | `/cancelTimer` | Cancela o timer sem fechar |
 
 ---
 
-##  Passo a Passo para o Uso
+## Passo a Passo para Uso
 
-### 1. Preparar o Computador
-1. Instale a Arduino IDE.
+### 1. Preparar o Ambiente
+1. Instale a [Arduino IDE](https://www.arduino.cc/en/software).
 2. No gerenciador de placas, instale o core `esp32`.
 3. No gerenciador de bibliotecas, instale `ESP32Servo`.
-4. Abra o arquivo `FogaoServoWeb.ino` (ou `CódigoWeb.ino`).
+4. Abra o arquivo `FogaoTemas.ino`.
 5. Selecione a placa ESP32 correta e a porta USB correspondente.
 
-### 2. Preparar a Montagem
-1. Conecte o sinal do servo no GPIO26.
-2. Alimente o servo com fonte estável de 5V-6V (2.5A+).
-3. Ligue o GND da fonte do servo ao GND do ESP32.
-4. Não acople o servo ao manípulo com força antes de testar os ângulos.
-5. Faça os primeiros testes com o fogão desligado e, se possível, com o gás fechado.
+### 2. Montar o Hardware
+1. Conecte o sinal do servo no **GPIO26**.
+2. Alimente o servo com fonte externa estável de **6 V / 2.5 A+** (não pelo ESP32).
+3. Ligue o **GND** da fonte do servo ao **GND** do ESP32.
+4. Não fixe o servo ao manípulo com força antes de testar os ângulos.
+5. Faça os primeiros testes com o gás fechado.
 
 ### 3. Gravar e Conectar
 1. Grave o firmware no ESP32 pela Arduino IDE.
-2. Aguarde o ESP32 iniciar.
-3. No celular ou computador, conecte-se ao Wi-Fi `FOGAO-ESP32` (senha `12345678`).
-4. Abra o navegador no endereço `http://192.168.4.1`.
+2. Conecte ao Wi-Fi `FOGAO-ESP32` (senha `12345678`).
+3. Acesse `http://192.168.4.1` no navegador.
 
-### 4. Calibrar na Bancada
-1. Clique em `Liberar servo`.
-2. Use o slider para mover o servo devagar.
-3. Encontre o ângulo que deixa o manípulo fechado e clique em `Salvar fechado`.
-4. Encontre o ângulo do fogo alto e clique em `Salvar alto`.
-5. Encontre o ângulo do fogo médio e clique em `Salvar médio`.
-6. Encontre o ângulo do fogo baixo e clique em `Salvar baixo`.
-7. Teste os botões `Ir para alto`, `Ir para médio`, `Ir para baixo` e `Fechar agora`.
+### 4. Calibrar
+1. Clique em **🔓 Liberar servo**.
+2. Gire o manípulo manualmente até a posição **fechado** e clique em **Marcar posição atual → Fechado**.
+3. Gire até **fogo alto** e marque.
+4. Gire até **fogo baixo** e marque.
+5. Use o slider para ajuste fino e clique em **Salvar** em cada nível.
+6. Teste os botões **Fogo Alto**, **Fogo Baixo** e **Fechar agora**.
 
 ### 5. Inversão de Sentido de Giro
-Se o servo girar no sentido contrário ao da válvula, altere em `FogaoServoWeb.ino`:
+Se o servo girar ao contrário, altere em `FogaoTemas.ino`:
 ```cpp
 static const bool INVERT_SERVO_DIRECTION = false; // ou true
 ```
 
 ---
 
-##  Estrutura de Arquivos Principais
+## Estrutura de Arquivos
 
-- `MontagemGeralFinal.stl` — Montagem 3D completa de todo o conjunto.
-- `BaseComManipulo.stl` — Subconjunto da base de comando com o manípulo do fogão.
-- `Base996r.stl` — Suporte mecânico estrutural do servo MG996R.
-- `Eng22DenteServo.stl` & `Eng25DentesBase.stl` — Par de engrenagens de transmissão (relação 22:25).
-- `Caixa_ESP32_base.stl` & `Caixa_ESP32_tampa.stl` — Case protetor da eletrônica.
-- `FogaoServoWeb.ino` / `CódigoWeb.ino` — Código de controle com interface Web responsiva.
-- `DOSSIE_TECNICO_PROJETO.md` — Documentação técnica completa com todas as medidas, cálculos e esquemas elétricos.
+| Arquivo | Descrição |
+|---------|-----------|
+| `FogaoTemas.ino` | Firmware principal — controle, interface web e temas |
+| `CódigoWeb.ino` | Versão anterior do firmware (referência) |
+| `Base996r.stl` | Suporte mecânico estrutural do servo MG996R |
+| `BaseComManipulo.stl` | Base de comando com encaixe do manípulo do fogão |
+| `MontagemFinal1.stl` | Montagem 3D completa do conjunto |
+| `Eng22DenteServo.stl` | Engrenagem do servo (22 dentes) |
+| `Eng25DentesBase.stl` | Engrenagem da base da válvula (25 dentes) |
+| `Cobertura_Ajuste3.3mf` | Cobertura protetora do mecanismo |
+| `EsquemaConexões.png` | Diagrama elétrico das conexões |
+| `esquema_eletrico_visual.html` | Esquema elétrico interativo |
+| `DOSSIE_TECNICO_PROJETO.md` | Documentação técnica completa |
